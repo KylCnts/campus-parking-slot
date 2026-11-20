@@ -1,0 +1,162 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --radius: 0.625rem;
+  --background: oklch(0.985 0.002 247);
+  --foreground: oklch(0.21 0.03 265);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.21 0.03 265);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.21 0.03 265);
+  --primary: oklch(0.55 0.2 262);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.96 0.006 250);
+  --secondary-foreground: oklch(0.25 0.03 265);
+  --muted: oklch(0.96 0.006 250);
+  --muted-foreground: oklch(0.52 0.02 260);
+  --accent: oklch(0.95 0.015 255);
+  --accent-foreground: oklch(0.25 0.03 265);
+  --destructive: oklch(0.58 0.22 27);
+  --border: oklch(0.91 0.008 255);
+  --input: oklch(0.91 0.008 255);
+  --ring: oklch(0.55 0.2 262);
+  --sidebar: oklch(0.22 0.04 265);
+  --sidebar-foreground: oklch(0.86 0.02 260);
+  --sidebar-accent: oklch(0.3 0.05 265);
+  --sidebar-primary: oklch(0.7 0.15 255);
+
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --chart-grid: oklch(0.92 0.006 255);
+  --available: oklch(0.62 0.16 152);
+  --occupied: oklch(0.6 0.21 25);
+  --reserved: oklch(0.75 0.15 75);
+  --inactive: oklch(0.6 0.02 260);
+  --event: oklch(0.55 0.19 260);
+
+  /* 2D parking map */
+  --slot-available: #15803d;
+  --slot-occupied: #dc2626;
+  --slot-event: #2563eb;
+  --map-ground: #e8ece6;
+  --map-asphalt: #d5d9df;
+  --map-building: #f8f6f0;
+  --map-wall: #475569;
+  --map-label: #1e293b;
+  --map-lane: #f8fafc;
+  --map-walk: #efe3c8;
+  --map-walk-line: #e0cfa8;
+  --map-tree: #3f8f4f;
+  --map-tree-light: #62ad6f;
+  --map-gate-in: #15803d;
+  --map-gate-out: #b91c1c;
+  --map-door: #0f766e;
+  --map-selected: #0f172a;
+}
+
+.dark {
+  --background: oklch(0.17 0.02 265);
+  --foreground: oklch(0.95 0.005 255);
+  --card: oklch(0.21 0.025 265);
+  --card-foreground: oklch(0.95 0.005 255);
+  --popover: oklch(0.21 0.025 265);
+  --popover-foreground: oklch(0.95 0.005 255);
+  --primary: oklch(0.68 0.16 258);
+  --primary-foreground: oklch(0.17 0.02 265);
+  --secondary: oklch(0.27 0.025 265);
+  --secondary-foreground: oklch(0.95 0.005 255);
+  --muted: oklch(0.27 0.025 265);
+  --muted-foreground: oklch(0.7 0.02 260);
+  --accent: oklch(0.28 0.03 265);
+  --accent-foreground: oklch(0.95 0.005 255);
+  --destructive: oklch(0.65 0.2 25);
+  --border: oklch(0.3 0.025 265);
+  --input: oklch(0.32 0.025 265);
+  --ring: oklch(0.68 0.16 258);
+  --sidebar: oklch(0.14 0.02 265);
+  --sidebar-foreground: oklch(0.84 0.02 260);
+  --sidebar-accent: oklch(0.24 0.03 265);
+  --sidebar-primary: oklch(0.72 0.15 255);
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --chart-grid: oklch(0.3 0.02 265);
+  --event: oklch(0.68 0.16 258);
+  --map-ground: #1b2430;
+  --map-asphalt: #2b3543;
+  --map-building: #3a4656;
+  --map-wall: #94a3b8;
+  --map-label: #e2e8f0;
+  --map-lane: #94a3b8;
+  --map-walk: #4a4336;
+  --map-walk-line: #5c5342;
+  --map-tree: #2f6f3e;
+  --map-tree-light: #468f57;
+  --map-selected: #ffffff;
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-available: var(--available);
+  --color-occupied: var(--occupied);
+  --color-reserved: var(--reserved);
+  --color-inactive: var(--inactive);
+  --color-event: var(--event);
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: white; }
+  .print-area { padding: 0 !important; }
+}
+
+@keyframes flash-update {
+  0% { box-shadow: 0 0 0 0 color-mix(in oklch, var(--primary) 60%, transparent); }
+  100% { box-shadow: 0 0 0 10px transparent; }
+}
+.flash { animation: flash-update 1s ease-out; }
+
+.map-slot .map-slot-body { transition: fill 0.3s ease, filter 0.15s ease; }
+.map-slot:hover .map-slot-body { filter: brightness(1.12); }
+.map-slot:focus-visible .map-slot-body { stroke: var(--ring); stroke-width: 7px; }
+@keyframes map-slot-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+.map-slot-flash { animation: map-slot-pulse 0.5s ease-in-out 2; }
+@media (prefers-reduced-motion: reduce) { .map-slot-flash { animation: none; } }
