@@ -8,9 +8,8 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from parking.models import Vehicle, normalize_plate
 
-from .constants import COURSES, STUDENT_LIMIT_MESSAGE
+from .constants import COURSES, VEHICLE_COLOR_NAMES
 from .images import clean_school_id
-from .limits import reserve_student_seat, student_registration_open
 from .models import AccountVerification, User
 
 BRAND_MODEL_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9 .\-/+]{1,99}$")
@@ -48,6 +47,15 @@ def clean_brand_model(value):
     if not BRAND_MODEL_RE.match(value):
         raise serializers.ValidationError("Enter a valid vehicle brand or model, e.g. Honda Click 125i.")
     return value
+
+
+def clean_vehicle_color(value):
+    """Accept only a color from the predefined list and store its standard name."""
+    wanted = " ".join(str(value or "").split()).lower()
+    for name in VEHICLE_COLOR_NAMES:
+        if name.lower() == wanted:
+            return name
+    raise serializers.ValidationError("Select a vehicle color from the list.")
 
 
 class UserVehicleSerializer(serializers.ModelSerializer):
@@ -105,11 +113,6 @@ class RegisterSerializer(serializers.Serializer):
     vehicle_brand_model = serializers.CharField(max_length=100)
     plate_number = serializers.CharField(max_length=20)
 
-    def to_internal_value(self, data):
-        if data.get("role") == User.Role.STUDENT and not student_registration_open():
-            raise serializers.ValidationError({"detail": STUDENT_LIMIT_MESSAGE})
-        return super().to_internal_value(data)
-
     def validate_email(self, value):
         value = value.lower()
         if User.objects.filter(email__iexact=value).exists():
@@ -139,6 +142,9 @@ class RegisterSerializer(serializers.Serializer):
     def validate_vehicle_brand_model(self, value):
         return clean_brand_model(value)
 
+    def validate_vehicle_color(self, value):
+        return clean_vehicle_color(value)
+
     def validate(self, attrs):
         if attrs["role"] == User.Role.STUDENT:
             if attrs["department"] not in COURSES:
@@ -158,8 +164,6 @@ class RegisterSerializer(serializers.Serializer):
 
     @transaction.atomic
     def create(self, data):
-        if data["role"] == User.Role.STUDENT:
-            reserve_student_seat()
         user = User.objects.create_user(
             email=data["email"],
             password=data["password"],
@@ -257,6 +261,10 @@ class AdminUserSerializer(serializers.ModelSerializer):
             if not plate_is_free(attrs["vehicle_plate"]):
                 raise serializers.ValidationError({"vehicle_plate": "This plate number is already registered."})
             attrs["vehicle_brand_model"] = clean_brand_model(attrs["vehicle_brand_model"])
+            try:
+                attrs["vehicle_color"] = clean_vehicle_color(attrs["vehicle_color"])
+            except serializers.ValidationError as e:
+                raise serializers.ValidationError({"vehicle_color": e.detail})
         pw = attrs.get("password")
         if not self.instance and not pw:
             raise serializers.ValidationError({"password": "A password is required for new accounts."})
@@ -274,8 +282,6 @@ class AdminUserSerializer(serializers.ModelSerializer):
         role = data.get("role")
         if role == User.Role.ADMIN:
             data["is_staff"] = True
-        if role == User.Role.STUDENT:
-            reserve_student_seat()
         user = User.objects.create_user(password=pw, **data)
         if role == User.Role.STUDENT:
             save_vehicle(user, plate, Vehicle.VehicleType.MOTORCYCLE, color, brand)

@@ -3,6 +3,7 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { GraduationCap, Hourglass, ImageUp, Loader2, Presentation } from 'lucide-react'
 import { toast } from 'sonner'
 import { PasswordInput } from '@/components/shared'
+import { VehicleColorPicker } from '@/components/vehicle-color'
 import { Button } from '@/components/ui/button'
 import { Field, Input, Select } from '@/components/ui/form-controls'
 import { api } from '@/lib/api'
@@ -36,7 +37,7 @@ function validate(f: typeof empty, isStudent: boolean) {
   if (!f.department.trim()) e.department = `${isStudent ? 'Course' : 'Department'} is required.`
   if (isStudent && !f.year_level) e.year_level = 'Year level is required.'
   if (!/^\+?[0-9][0-9 -]{6,18}$/.test(f.contact_number.trim())) e.contact_number = 'Enter a valid contact number.'
-  if (!f.vehicle_color.trim()) e.vehicle_color = 'Vehicle color is required.'
+  if (!f.vehicle_color) e.vehicle_color = 'Select your vehicle color.'
   if (!f.vehicle_brand_model.trim()) e.vehicle_brand_model = 'Vehicle brand / model is required.'
   else if (!/^[A-Za-z0-9][A-Za-z0-9 .\-/+]{1,99}$/.test(f.vehicle_brand_model.trim())) e.vehicle_brand_model = 'Enter a valid vehicle brand or model.'
   if (!/^[A-Za-z0-9][A-Za-z0-9 -]{1,18}[A-Za-z0-9]$/.test(f.plate_number.trim())) e.plate_number = 'Enter a valid plate number.'
@@ -137,13 +138,6 @@ export default function Register() {
         {tab('student', 'Student Assistant', GraduationCap)}
         {tab('faculty', 'Faculty', Presentation)}
       </div>
-      {isStudent && meta && !meta.student_assistant_registration_open ? (
-        <div role="status" className="border-reserved/60 bg-reserved/15 space-y-3 rounded-lg border px-4 py-4 text-sm">
-          <p className="font-medium">Student Assistant registration is currently closed because the maximum number of authorized Student Assistant accounts has been reached.</p>
-          <p>Please contact the Admin / Security Guard if you believe you should have access.</p>
-          <Link to="/login" className="text-primary font-medium hover:underline">Back to sign in</Link>
-        </div>
-      ) : (
       <form onSubmit={submit} noValidate className="space-y-6">
         <section>
           <h3 className="text-muted-foreground mb-3 text-xs font-semibold tracking-wider uppercase">Personal information</h3>
@@ -210,11 +204,19 @@ export default function Register() {
                 ))}
               </Select>
             </Field>
-            <Field label="Vehicle color" error={errors.vehicle_color}>
-              <Input value={form.vehicle_color} onChange={set('vehicle_color')} placeholder="White" aria-invalid={!!errors.vehicle_color} />
-            </Field>
-            <Field label="Vehicle Brand / Model" error={errors.vehicle_brand_model}>
+            <Field label="Vehicle Brand / Model" error={errors.vehicle_brand_model} className="sm:col-span-2">
               <Input value={form.vehicle_brand_model} onChange={set('vehicle_brand_model')} maxLength={100} placeholder="Honda Click 125i" aria-invalid={!!errors.vehicle_brand_model} />
+            </Field>
+            <Field label="Vehicle color" error={errors.vehicle_color} className="sm:col-span-2">
+              <VehicleColorPicker
+                name="register-vehicle-color"
+                value={form.vehicle_color}
+                invalid={!!errors.vehicle_color}
+                onChange={(color) => {
+                  setForm((f) => ({ ...f, vehicle_color: color }))
+                  setErrors((prev) => ({ ...prev, vehicle_color: '' }))
+                }}
+              />
             </Field>
           </div>
         </section>
@@ -241,7 +243,6 @@ export default function Register() {
           </Link>
         </p>
       </form>
-      )}
     </AuthShell>
   )
 }

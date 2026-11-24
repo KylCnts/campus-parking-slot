@@ -61,11 +61,11 @@ export default function Login() {
       </form>
       <div className="text-muted-foreground mt-6 space-y-1 text-center text-sm">
         <p>Don't have an account?</p>
-        <p>
+        <p className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
           <Link to="/register/student" className="text-primary font-medium hover:underline">
             Register as Student Assistant
           </Link>
-          <span className="mx-2">·</span>
+          <span aria-hidden>·</span>
           <Link to="/register/faculty" className="text-primary font-medium hover:underline">
             Register as Faculty
           </Link>

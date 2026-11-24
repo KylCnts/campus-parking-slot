@@ -14,8 +14,7 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from accounts.constants import COURSES
-from accounts.limits import student_registration_open
+from accounts.constants import COURSES, VEHICLE_COLORS
 from accounts.models import AccountVerification
 from accounts.permissions import IsAdmin, IsAdminOrReadOnly
 
@@ -30,6 +29,7 @@ from .models import (
     ParkingSettings,
     ParkingSpace,
     ParkingTransaction,
+    UserReport,
     Vehicle,
     normalize_plate,
 )
@@ -625,6 +625,7 @@ def dashboard_summary(request):
         }
         data["pending_verifications"] = AccountVerification.objects.filter(status=AccountVerification.Status.PENDING).count()
         data["open_reports"] = IncidentReport.objects.filter(status__in=["OPEN", "IN_REVIEW"]).count()
+        data["open_user_reports"] = UserReport.objects.exclude(status__in=UserReport.CLOSED_STATUSES).count()
         data["registered_vehicles"] = Vehicle.objects.count()
         data["upcoming_events"] = ParkingEvent.objects.filter(
             status=ParkingEvent.Status.PUBLISHED, ends_at__gt=timezone.now()
@@ -865,6 +866,7 @@ def meta(request):
             "roles": [{"value": v, "label": l} for v, l in User.Role.choices],
             "report_kinds": [{"value": v, "label": l} for v, l in IncidentReport.Kind.choices],
             "courses": COURSES,
-            "student_assistant_registration_open": student_registration_open(),
+            "vehicle_colors": [{"value": name, "label": name, "swatch": swatch} for name, swatch in VEHICLE_COLORS],
+            "user_report_categories": [{"value": v, "label": l} for v, l in UserReport.Category.choices],
         }
     )

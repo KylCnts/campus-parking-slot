@@ -11,6 +11,7 @@ from rest_framework.response import Response
 
 from parking.services import audit, close_user_connections, log_activity, send_user_email
 
+from .images import image_content_type
 from .models import AccountVerification, User
 from .permissions import IsAdmin
 
@@ -41,7 +42,12 @@ class VerificationSerializer(serializers.ModelSerializer):
         vehicle = next(iter(obj.user.vehicles.all()), None) if obj.user else None
         if not vehicle:
             return None
-        return {"plate_number": vehicle.plate_number, "vehicle_type": vehicle.get_vehicle_type_display(), "brand_model": vehicle.brand_model}
+        return {
+            "plate_number": vehicle.plate_number,
+            "vehicle_type": vehicle.get_vehicle_type_display(),
+            "brand_model": vehicle.brand_model,
+            "color": vehicle.color,
+        }
 
 
 def _delete_image(verification):
@@ -78,8 +84,7 @@ class VerificationViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, view
         if not verification.school_id_image:
             raise Http404("This image has been deleted.")
         response = FileResponse(verification.school_id_image.open("rb"))
-        content_type = "image/png" if verification.school_id_image.name.endswith(".png") else "image/jpeg"
-        response["Content-Type"] = content_type
+        response["Content-Type"] = image_content_type(verification.school_id_image.name)
         response["Content-Disposition"] = "inline"
         response["Cache-Control"] = "no-store"
         response["X-Content-Type-Options"] = "nosniff"

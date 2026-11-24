@@ -4,6 +4,7 @@ import { CalendarClock, CircleAlert, Loader2, LogOut, Search } from 'lucide-reac
 import { toast } from 'sonner'
 import ParkingMap2D, { STATUS_META } from '@/components/ParkingMap2D'
 import { useFlash } from '@/components/parking'
+import { VehicleColor } from '@/components/vehicle-color'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Field, Input } from '@/components/ui/form-controls'
@@ -107,6 +108,7 @@ function VehicleEntryForm({ space, onDone, onRefresh, onClose }: { space: MapSpa
                 ['Email address', v.owner_email ?? '—'],
                 ['Account type', v.owner_role_display ?? '—'],
                 ['Vehicle type', v.vehicle_type_display],
+                ['Color', <VehicleColor key="color" color={v.color} />],
                 ['Brand / model', v.brand_model || '—'],
                 ['Plate number', v.plate_number],
                 ['Selected parking area', `${space.area_name} · ${space.slot_number}`],
@@ -133,8 +135,11 @@ function VehicleEntryForm({ space, onDone, onRefresh, onClose }: { space: MapSpa
   )
 }
 
-/** The live map. The Admin / Security Guard records entries and exits here; everyone else views it. */
-export default function ParkingMapPanel() {
+/**
+ * The live map. The Admin / Security Guard records entries and exits here; everyone else views it.
+ * `changed` (slot number + counter) refreshes the map and highlights a slot changed elsewhere on the page.
+ */
+export default function ParkingMapPanel({ changed }: { changed?: { slot: string; nonce: number } | null }) {
   const { user } = useAuth()
   const admin = user?.role === 'ADMIN'
   const map = useFetch<MapSpace[]>('/spaces/map/')
@@ -146,6 +151,12 @@ export default function ParkingMapPanel() {
     map.reload()
     trigger(e.detail?.slot)
   })
+
+  useEffect(() => {
+    if (!changed) return
+    map.reload()
+    trigger(changed.slot)
+  }, [changed?.nonce]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const spaces = useMemo(() => map.data ?? [], [map.data])
   const slot = spaces.find((s) => s.id === selected?.id) ?? null

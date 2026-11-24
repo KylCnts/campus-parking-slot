@@ -2,6 +2,8 @@ from django.conf import settings
 from django.db import models
 from django.db.models import Q
 
+from accounts.storage import private_storage
+
 
 class Category(models.TextChoices):
     STUDENT = "STUDENT", "Student Assistant Parking"
@@ -370,6 +372,54 @@ class IncidentReport(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+
+
+class UserReport(models.Model):
+    """A report or concern sent by a Student Assistant or Faculty Member to the administrator."""
+
+    class Category(models.TextChoices):
+        PARKING_SPACE = "PARKING_SPACE", "Parking space concern"
+        PARKING_RECORD = "PARKING_RECORD", "Incorrect parking record"
+        VEHICLE = "VEHICLE", "Vehicle registration"
+        ACCOUNT = "ACCOUNT", "Account or access"
+        SAFETY = "SAFETY", "Safety or security"
+        FACILITY = "FACILITY", "Facility or maintenance"
+        SUGGESTION = "SUGGESTION", "Suggestion"
+        OTHER = "OTHER", "Other"
+
+    class Status(models.TextChoices):
+        SUBMITTED = "SUBMITTED", "Submitted"
+        UNDER_REVIEW = "UNDER_REVIEW", "Under Review"
+        IN_PROGRESS = "IN_PROGRESS", "In Progress"
+        RESOLVED = "RESOLVED", "Resolved"
+        REJECTED = "REJECTED", "Rejected"
+
+    CLOSED_STATUSES = (Status.RESOLVED, Status.REJECTED)
+
+    reporter = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="user_reports"
+    )
+    # Kept on the report so the administrator can still identify the sender if the account is removed later.
+    reporter_name = models.CharField(max_length=150)
+    reporter_email = models.EmailField()
+    category = models.CharField(max_length=20, choices=Category.choices, default=Category.OTHER)
+    title = models.CharField(max_length=150)
+    description = models.TextField()
+    attachment = models.FileField(storage=private_storage, upload_to="report_attachments/", null=True, blank=True, max_length=255)
+    status = models.CharField(max_length=15, choices=Status.choices, default=Status.SUBMITTED, db_index=True)
+    admin_response = models.TextField(blank=True)
+    handled_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
+    handled_by_name = models.CharField(max_length=150, blank=True)
+    responded_at = models.DateTimeField(null=True, blank=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+
+    def __str__(self):
+        return f"RPT-{self.pk:05d} {self.title}" if self.pk else self.title
 
 
 class Notification(models.Model):

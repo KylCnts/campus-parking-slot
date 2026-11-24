@@ -87,7 +87,8 @@ cd backend && python manage.py test parking
    The page also briefly highlights the slot that changed. Per-user notifications arrive over the same socket.
 
 ## 2D parking map, reservations and events
-- The map at **Live Parking Map / Parking Spaces** is traced from the campus layout drawing: 24 car slots and 25 motorcycle slots. Slot positions are stored in the database (`parking/layout.py` holds the original layout).
+- The map at **Parking Map & Gate** (admin) / **Parking Spaces** (members) is traced from the campus layout drawing: 24 car slots and 25 motorcycle slots. Slot positions are stored in the database (`parking/layout.py` holds the original layout). The four Offices Row slots (D-01 to D-04) are landscape boxes (migration `0011_offices_row_landscape`).
+- On **Parking Map & Gate** the Admin / Security Guard records a vehicle entry by selecting a green box, records an exit by selecting a red box or by searching the plate number (top-right of the map), and sees every parked vehicle in the **Parked vehicles** tab. The map also has a **List** view with large slot buttons for phones.
 - Slot colors: **green** available, **red** occupied, **blue** reserved for an event.
 - Student assistants and faculty click a green box on the map, confirm, and set an estimated departure time to occupy it. Availability is re-checked on the server inside a locked database transaction.
 - All slots belong to faculty, except 3 student motorcycle slots (MC-01 to MC-03). Students may only bring motorcycles inside the campus.
@@ -96,9 +97,11 @@ cd backend && python manage.py test parking
 - **Real email delivery needs SMTP settings** in `backend/.env` (see `.env.example`). Test them with `python manage.py send_test_email you@example.com`. Without them, notices are only printed in the backend window and shown as "Console only".
 
 ## Accounts and verification
-- Student assistants and faculty register with a photo of their DLL School ID. New accounts stay **Pending** until an administrator approves them under **ID Verification**.
+- Student assistants and faculty register with a photo of their DLL School ID. New accounts stay **Pending** until an administrator approves them under **User Management → ID Verification**. There is no limit on the number of Student Assistant accounts.
+- Vehicle colors are chosen from a fixed list (`VEHICLE_COLORS` in `accounts/constants.py`, also served by `/api/meta/`). Older free-text colors are kept until the vehicle's color is changed.
+- Student assistants and faculty send reports or concerns from **My Reports** (optional JPG/PNG photo, stored privately). Administrators review them under **User Reports**, set the status (Submitted, Under Review, In Progress, Resolved, Rejected) and reply; the sender is notified.
 - The photo is stored privately and deleted after the decision. The decision itself stays on record.
-- Accounts can be suspended, archived and restored. Administrative actions are kept in a permanent **Audit Trail**.
+- Accounts can be suspended, archived and restored. Administrative actions are kept in a permanent **Audit Trail** (under **Logs & Audit**, next to **Activity Logs**).
 - `python manage.py reset_admin_password <email>` issues a one-time administrator password that must be changed at the next sign-in.
 
 ## Roles
@@ -108,5 +111,5 @@ cd backend && python manage.py test parking
 ## Main API endpoints (`/api/…`)
 `auth/login|refresh|logout|register|me|change-password|password-reset|password-reset/confirm`,
 `users/` (+`toggle-active`, `stats`), `areas/`, `spaces/` (+`bulk-create`), `vehicles/` (+`lookup`, `mine`),
-`transactions/` (+`entry`, `{id}/exit`, `{id}/cancel`, `active`), `incident-reports/`, `notifications/` (+`mark-all-read`),
+`transactions/` (+`entry`, `{id}/exit`, `{id}/cancel`, `active`), `incident-reports/`, `user-reports/` (+`summary`, `{id}/attachment`), `notifications/` (+`mark-all-read`),
 `activity-logs/`, `dashboard/summary/`, `analytics/`, `reports/`, `settings/`, `meta/`.

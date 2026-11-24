@@ -58,7 +58,7 @@ export default function EmailHistory() {
             <option value="CANCELLED">Cancelled</option>
           </Select>
         </div>
-        <Table>
+        <Table stack>
           <TableHeader>
             <TableRow>
               <TableHead>Date</TableHead>
@@ -72,16 +72,20 @@ export default function EmailHistory() {
           <TableBody>
             {list.loading && !list.data ? <LoadingRow cols={6} /> : list.data?.results.map((n) => (
               <TableRow key={n.id}>
-                <TableCell className="text-muted-foreground text-xs">{fmtDateTime(n.sent_at ?? n.created_at)}</TableCell>
-                <TableCell className="font-medium">{n.event_name}</TableCell>
-                <TableCell><Badge variant="secondary">{KIND[n.kind]}</Badge></TableCell>
-                <TableCell>
-                  <p>{n.recipient_name ?? '—'}</p>
-                  <p className="text-muted-foreground text-xs">{n.recipient_email}</p>
+                <TableCell label="Date" className="text-muted-foreground text-xs">{fmtDateTime(n.sent_at ?? n.created_at)}</TableCell>
+                <TableCell label="Event" className="font-medium">{n.event_name}</TableCell>
+                <TableCell label="Notice"><Badge variant="secondary">{KIND[n.kind]}</Badge></TableCell>
+                <TableCell label="Recipient">
+                  <div>
+                    <p>{n.recipient_name ?? '—'}</p>
+                    <p className="text-muted-foreground text-xs break-all">{n.recipient_email}</p>
+                  </div>
                 </TableCell>
-                <TableCell>
-                  <StatusBadge status={n.status} />
-                  {n.error && <p className="text-destructive mt-1 max-w-56 truncate text-xs" title={n.error}>{n.error}</p>}
+                <TableCell label="Status">
+                  <div>
+                    <StatusBadge status={n.status} />
+                    {n.error && <p className="text-destructive mt-1 max-w-56 truncate text-xs" title={n.error}>{n.error}</p>}
+                  </div>
                 </TableCell>
                 <TableCell className="text-right">
                   {n.status === 'FAILED' && <Button size="sm" variant="outline" onClick={() => retry(n.id)}><RotateCw /> Retry</Button>}

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ScrollText } from 'lucide-react'
-import { EmptyState, LoadingRow, PageHeader, Pagination, SearchInput } from '@/components/shared'
+import { EmptyState, LoadingRow, Pagination, SearchInput, SectionHeader } from '@/components/shared'
 import { Card } from '@/components/ui/card'
 import { Input, Select } from '@/components/ui/form-controls'
 import { Badge } from '@/components/ui/misc'
@@ -35,21 +35,21 @@ export default function AuditTrail() {
 
   return (
     <div>
-      <PageHeader title="Audit Trail" description="A permanent record of administrative actions. Entries cannot be edited or deleted." />
+      <SectionHeader description="A permanent record of administrative actions. Entries cannot be edited or deleted." />
       <Card className="gap-0 py-0">
-        <div className="flex flex-col gap-3 border-b p-4 lg:flex-row lg:items-center">
+        <div className="flex flex-col gap-3 border-b p-4 lg:flex-row lg:flex-wrap lg:items-center">
           <SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1) }} placeholder="Search admin, record, reason…" />
           <Select value={action} onChange={(e) => { setAction(e.target.value); setPage(1) }} className="lg:w-64" aria-label="Action">
             <option value="">All actions</option>
             {actions.data?.map((a) => <option key={a} value={a}>{a.replace(/_/g, ' ')}</option>)}
           </Select>
-          <div className="flex items-center gap-2">
-            <Input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1) }} aria-label="From date" />
+          <div className="flex min-w-0 items-center gap-2">
+            <Input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1) }} aria-label="From date" className="min-w-0 flex-1" />
             <span className="text-muted-foreground text-sm">to</span>
-            <Input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(1) }} aria-label="To date" />
+            <Input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(1) }} aria-label="To date" className="min-w-0 flex-1" />
           </div>
         </div>
-        <Table>
+        <Table stack>
           <TableHeader>
             <TableRow>
               <TableHead>Date and time</TableHead>
@@ -64,16 +64,18 @@ export default function AuditTrail() {
           <TableBody>
             {list.loading && !list.data ? <LoadingRow cols={7} /> : list.data?.results.map((e) => (
               <TableRow key={e.id} className="align-top">
-                <TableCell className="text-muted-foreground align-top text-xs">{fmtDateTime(e.created_at)}</TableCell>
-                <TableCell className="align-top text-xs">
-                  <p className="font-medium">{e.actor_name}</p>
-                  <p className="text-muted-foreground">{e.actor_email}</p>
+                <TableCell label="Date and time" className="text-muted-foreground align-top text-xs">{fmtDateTime(e.created_at)}</TableCell>
+                <TableCell label="Administrator" className="align-top text-xs">
+                  <div>
+                    <p className="font-medium">{e.actor_name}</p>
+                    <p className="text-muted-foreground break-all">{e.actor_email}</p>
+                  </div>
                 </TableCell>
-                <TableCell className="align-top"><Badge variant="secondary">{e.action.replace(/_/g, ' ')}</Badge></TableCell>
-                <TableCell className="max-w-52 align-top text-xs whitespace-normal">{e.target_label}</TableCell>
-                <TableCell className="max-w-60 align-top text-xs whitespace-normal"><Values value={e.previous_value} /></TableCell>
-                <TableCell className="max-w-60 align-top text-xs whitespace-normal"><Values value={e.new_value} /></TableCell>
-                <TableCell className="max-w-52 align-top text-xs whitespace-normal">{e.reason || '—'}</TableCell>
+                <TableCell label="Action" className="align-top"><Badge variant="secondary">{e.action.replace(/_/g, ' ')}</Badge></TableCell>
+                <TableCell label="Affected record" className="max-w-52 align-top text-xs whitespace-normal">{e.target_label}</TableCell>
+                <TableCell label="Previous value" className="max-w-60 align-top text-xs whitespace-normal"><Values value={e.previous_value} /></TableCell>
+                <TableCell label="New value" className="max-w-60 align-top text-xs whitespace-normal"><Values value={e.new_value} /></TableCell>
+                <TableCell label="Reason" className="max-w-52 align-top text-xs whitespace-normal">{e.reason || '—'}</TableCell>
               </TableRow>
             ))}
           </TableBody>

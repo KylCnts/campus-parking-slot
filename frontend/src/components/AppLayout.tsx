@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
-  Activity,
   BarChart3,
   Bell,
   BookOpen,
@@ -13,16 +12,15 @@ import {
   FileWarning,
   KeyRound,
   LayoutDashboard,
-  LogIn,
   LogOut,
   Mail,
   Map,
   Menu,
+  MessageSquareWarning,
   Moon,
   ParkingSquare,
   ScrollText,
   Settings,
-  ShieldCheck,
   Sun,
   User as UserIcon,
   Users,
@@ -53,7 +51,8 @@ const NAV: Record<Role, NavGroup[]> = {
     {
       items: [
         { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { to: '/availability', label: 'Live Parking Map', icon: Map },
+        // Live map, vehicle entry, vehicle exit (plate search) and the parked-vehicles list share one page.
+        { to: '/parking-map', label: 'Parking Map & Gate', icon: Map },
         { to: '/analytics', label: 'Analytics', icon: BarChart3 },
       ],
     },
@@ -62,28 +61,20 @@ const NAV: Record<Role, NavGroup[]> = {
       items: [
         { to: '/parking-spaces', label: 'Manage Parking Slots', icon: ParkingSquare },
         { to: '/event-parking', label: 'Event Parking', icon: CalendarClock },
-        { to: '/verifications', label: 'ID Verification', icon: ShieldCheck },
-        { to: '/users', label: 'Users', icon: Users },
-        { to: '/vehicles', label: 'Vehicles', icon: Car },
+        // ID Verification, Users and Vehicles are tabs of one page.
+        { to: '/user-management', label: 'User Management', icon: Users },
         { to: '/transactions', label: 'Transactions', icon: ClipboardList },
-      ],
-    },
-    {
-      title: 'Gate Operations',
-      items: [
-        { to: '/entry', label: 'Vehicle Entry', icon: LogIn },
-        { to: '/exit', label: 'Vehicle Exit', icon: LogOut },
-        { to: '/parked', label: 'Parked Vehicles', icon: CarFront },
       ],
     },
     {
       title: 'Monitoring',
       items: [
         { to: '/reports', label: 'Reports', icon: FileBarChart },
-        { to: '/email-history', label: 'Email History', icon: Mail },
+        { to: '/user-reports', label: 'User Reports', icon: MessageSquareWarning },
         { to: '/incident-reports', label: 'Record Reports', icon: FileWarning },
-        { to: '/audit-trail', label: 'Audit Trail', icon: ScrollText },
-        { to: '/activity-logs', label: 'Activity Logs', icon: Activity },
+        { to: '/email-history', label: 'Email History', icon: Mail },
+        // Audit Trail and Activity Logs are tabs of one page.
+        { to: '/logs', label: 'Logs & Audit', icon: ScrollText },
         { to: '/settings', label: 'Parking Settings', icon: Settings },
       ],
     },
@@ -93,8 +84,9 @@ const NAV: Record<Role, NavGroup[]> = {
       items: [
         { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { to: '/my-parking', label: 'My Parking', icon: CarFront },
-        { to: '/availability', label: 'Parking Spaces', icon: Map },
+        { to: '/parking-map', label: 'Parking Spaces', icon: Map },
         { to: '/my-vehicle', label: 'My Vehicle', icon: Car },
+        { to: '/my-reports', label: 'My Reports', icon: MessageSquareWarning },
         { to: '/guidelines', label: 'Parking Guidelines', icon: BookOpen },
       ],
     },
@@ -188,6 +180,20 @@ export default function AppLayout() {
       .catch(() => {})
   }, [loc.pathname, setUnread])
 
+  // Mobile menu: close when the page changes, close on Escape, and stop the page behind it from scrolling.
+  useEffect(() => setOpen(false), [loc.pathname])
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
+    const previous = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = previous
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
   if (!user) return null
   const initials = user.full_name
     .split(' ')
@@ -202,11 +208,16 @@ export default function AppLayout() {
         <Sidebar role={user.role} />
       </aside>
       {open && (
-        <div className="no-print fixed inset-0 z-40 lg:hidden">
+        <div className="no-print fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label="Main menu">
           <div className="absolute inset-0 bg-black/50" onClick={() => setOpen(false)} />
-          <div className="absolute inset-y-0 left-0 w-64 shadow-xl">
+          <div id="mobile-menu" className="absolute inset-y-0 left-0 w-72 max-w-[85vw] shadow-xl">
             <Sidebar role={user.role} onNavigate={() => setOpen(false)} />
-            <button className="absolute top-5 right-3 cursor-pointer text-white/70" onClick={() => setOpen(false)} aria-label="Close menu">
+            <button
+              className="absolute top-4 right-2 flex size-9 cursor-pointer items-center justify-center rounded-md text-white/70 hover:text-white focus-visible:ring-[3px] focus-visible:ring-white/40 focus-visible:outline-none"
+              onClick={() => setOpen(false)}
+              aria-label="Close menu"
+              autoFocus
+            >
               <X className="size-5" />
             </button>
           </div>
@@ -214,8 +225,8 @@ export default function AppLayout() {
       )}
 
       <div className="flex min-w-0 flex-1 flex-col lg:pl-64">
-        <header className="no-print bg-background/85 sticky top-0 z-30 flex h-14 items-center gap-3 border-b px-4 backdrop-blur sm:px-6">
-          <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setOpen(true)} aria-label="Open menu">
+        <header className="no-print bg-background/85 sticky top-0 z-30 flex h-14 items-center gap-2 border-b px-3 backdrop-blur sm:gap-3 sm:px-6">
+          <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setOpen(true)} aria-label="Open menu" aria-expanded={open} aria-controls="mobile-menu">
             <Menu />
           </Button>
           <div className="hidden sm:block">
@@ -272,7 +283,7 @@ export default function AppLayout() {
             </DropdownMenu>
           </div>
         </header>
-        <main className="print-area mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6">
+        <main className="print-area mx-auto w-full max-w-7xl min-w-0 flex-1 px-3 py-5 sm:px-6 sm:py-6">
           <Outlet />
         </main>
       </div>

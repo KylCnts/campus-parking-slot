@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { Archive, Ban, CircleCheck, Eye, Loader2, Pencil, Plus, RotateCcw, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { ConfirmDialog, EmptyState, LoadingRow, PageHeader, Pagination, PasswordInput, SearchInput, StatusBadge } from '@/components/shared'
+import { ConfirmDialog, EmptyState, LoadingRow, Pagination, PasswordInput, SearchInput, SectionHeader, StatusBadge } from '@/components/shared'
+import { VehicleColor, VehicleColorPicker } from '@/components/vehicle-color'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -45,6 +46,7 @@ function UserForm({ user, onDone }: { user: User | null; onDone: () => void }) {
     if (!f.full_name.trim()) errs.full_name = 'Required.'
     if (!/^\S+@\S+\.\S+$/.test(f.email)) errs.email = 'Enter a valid email.'
     if (!user && f.password.length < 8) errs.password = 'At least 8 characters.'
+    if (!user && f.role === 'STUDENT' && !f.vehicle_color) errs.vehicle_color = 'Select the vehicle color.'
     setErrors(errs)
     if (Object.keys(errs).length) return
     setBusy(true)
@@ -115,11 +117,11 @@ function UserForm({ user, onDone }: { user: User | null; onDone: () => void }) {
             <Field label="Plate number" error={errors.vehicle_plate}>
               <Input value={f.vehicle_plate} onChange={set('vehicle_plate')} className="uppercase" />
             </Field>
-            <Field label="Vehicle color" error={errors.vehicle_color}>
-              <Input value={f.vehicle_color} onChange={set('vehicle_color')} />
-            </Field>
-            <Field label="Vehicle Brand / Model" error={errors.vehicle_brand_model} className="sm:col-span-2">
+            <Field label="Vehicle Brand / Model" error={errors.vehicle_brand_model}>
               <Input value={f.vehicle_brand_model} onChange={set('vehicle_brand_model')} placeholder="Honda Click 125i" />
+            </Field>
+            <Field label="Vehicle color" error={errors.vehicle_color} className="sm:col-span-2">
+              <VehicleColorPicker name="user-vehicle-color" value={f.vehicle_color} invalid={!!errors.vehicle_color} onChange={(color) => setF({ ...f, vehicle_color: color })} />
             </Field>
           </>
         )}
@@ -200,9 +202,8 @@ export default function UsersPage() {
 
   return (
     <div>
-      <PageHeader
-        title="User Management"
-        description="Manage student, faculty, security and administrator accounts."
+      <SectionHeader
+        description="Student assistant, faculty and Admin / Security Guard accounts."
         actions={
           <Button onClick={() => setEditing(null)}>
             <Plus /> Add account
@@ -215,7 +216,6 @@ export default function UsersPage() {
             ['Students', stats.data.students],
             ['Faculty', stats.data.faculty],
             ['Admins', stats.data.admins],
-            ['Student Assistant places', `${stats.data.student_seats_used} of ${stats.data.student_seats_limit}`],
             ['Pending', stats.data.pending],
             ['Suspended', stats.data.suspended],
             ['Archived', stats.data.archived],
@@ -227,9 +227,9 @@ export default function UsersPage() {
         </div>
       )}
       <Card className="gap-0 py-0">
-        <div className="flex flex-col gap-3 border-b p-4 sm:flex-row">
+        <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:flex-wrap">
           <SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1) }} placeholder="Search name, email, ID, plate…" />
-          <Select value={role} onChange={(e) => { setRole(e.target.value); setPage(1) }} className="sm:w-44">
+          <Select value={role} onChange={(e) => { setRole(e.target.value); setPage(1) }} className="sm:w-44" aria-label="Role">
             <option value="">All roles</option>
             {ROLES.map((r) => (
               <option key={r.value} value={r.value}>
@@ -237,7 +237,7 @@ export default function UsersPage() {
               </option>
             ))}
           </Select>
-          <Select value={active} onChange={(e) => { setActive(e.target.value); setPage(1) }} className="sm:w-40">
+          <Select value={active} onChange={(e) => { setActive(e.target.value); setPage(1) }} className="sm:w-40" aria-label="Account status">
             <option value="">Any status</option>
             <option value="PENDING">Pending</option>
             <option value="APPROVED">Approved</option>
@@ -246,7 +246,7 @@ export default function UsersPage() {
             <option value="ARCHIVED">Archived</option>
           </Select>
         </div>
-        <Table>
+        <Table stack>
           <TableHeader>
             <TableRow>
               <TableHead>ID</TableHead>
@@ -267,20 +267,20 @@ export default function UsersPage() {
             ) : (
               users.data?.results.map((u) => (
                 <TableRow key={u.id}>
-                  <TableCell className="text-muted-foreground">#{u.id}</TableCell>
-                  <TableCell className="font-medium">{u.full_name}</TableCell>
-                  <TableCell>{u.email}</TableCell>
-                  <TableCell>
+                  <TableCell label="ID" className="text-muted-foreground">#{u.id}</TableCell>
+                  <TableCell label="Full name" className="font-medium">{u.full_name}</TableCell>
+                  <TableCell label="Email">{u.email}</TableCell>
+                  <TableCell label="Role">
                     <Badge variant="secondary">{roleLabel(u.role)}</Badge>
                   </TableCell>
-                  <TableCell>{u.id_number ?? '—'}</TableCell>
-                  <TableCell className="max-w-48 truncate">{u.department || '—'}</TableCell>
-                  <TableCell className="font-mono text-xs">{u.plate_number ?? '—'}</TableCell>
-                  <TableCell>
+                  <TableCell label="Student / Emp. ID">{u.id_number ?? '—'}</TableCell>
+                  <TableCell label="Department" className="max-w-48 truncate">{u.department || '—'}</TableCell>
+                  <TableCell label="Plate no." className="font-mono text-xs">{u.plate_number ?? '—'}</TableCell>
+                  <TableCell label="Status">
                     <StatusBadge status={u.account_status} />
                   </TableCell>
-                  <TableCell className="text-muted-foreground text-xs">{fmtDate(u.created_at)}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell label="Registered" className="text-muted-foreground text-xs">{fmtDate(u.created_at)}</TableCell>
+                  <TableCell className="text-right max-md:justify-end max-md:border-t max-md:pt-2">
                     <Button variant="ghost" size="icon" className="size-8" onClick={() => setViewing(u)} aria-label="View">
                       <Eye />
                     </Button>
@@ -348,7 +348,7 @@ export default function UsersPage() {
           </DialogHeader>
           {viewing && (
             <div className="space-y-4 text-sm">
-              <dl className="grid grid-cols-[9rem_1fr] gap-y-2">
+              <dl className="grid grid-cols-[minmax(0,7rem)_minmax(0,1fr)] gap-x-3 gap-y-2 break-words sm:grid-cols-[9rem_minmax(0,1fr)]">
                 <dt className="text-muted-foreground">Email</dt>
                 <dd>{viewing.email}</dd>
                 <dt className="text-muted-foreground">ID number</dt>
@@ -369,10 +369,12 @@ export default function UsersPage() {
                 {viewing.vehicles.length ? (
                   <ul className="space-y-2">
                     {viewing.vehicles.map((v) => (
-                      <li key={v.id} className="bg-muted/50 flex items-center justify-between rounded-md px-3 py-2">
+                      <li key={v.id} className="bg-muted/50 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-md px-3 py-2">
                         <span className="font-mono font-semibold">{v.plate_number}</span>
-                        <span className="text-muted-foreground">
-                          {[v.brand_model, v.color, v.vehicle_type.toLowerCase()].filter(Boolean).join(' · ')}
+                        <span className="text-muted-foreground flex flex-wrap items-center gap-x-1.5">
+                          {v.brand_model && <span>{v.brand_model} ·</span>}
+                          <VehicleColor color={v.color} />
+                          <span>· {v.vehicle_type.toLowerCase()}</span>
                         </span>
                       </li>
                     ))}

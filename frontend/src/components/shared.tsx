@@ -13,10 +13,21 @@ import { cn, timeAgo } from '@/lib/utils'
 export function PageHeader({ title, description, actions }: { title: string; description?: string; actions?: ReactNode }) {
   return (
     <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+      <div className="min-w-0">
+        <h1 className="text-xl font-semibold tracking-tight break-words sm:text-2xl">{title}</h1>
         {description && <p className="text-muted-foreground mt-1 text-sm">{description}</p>}
       </div>
+      {actions && <div className="no-print flex flex-wrap items-center gap-2">{actions}</div>}
+    </div>
+  )
+}
+
+/** Heading for one section of a tabbed page: a short description on the left, actions on the right. */
+export function SectionHeader({ description, actions }: { description?: string; actions?: ReactNode }) {
+  if (!description && !actions) return null
+  return (
+    <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      {description ? <p className="text-muted-foreground min-w-0 text-sm">{description}</p> : <span />}
       {actions && <div className="no-print flex flex-wrap items-center gap-2">{actions}</div>}
     </div>
   )
@@ -62,6 +73,56 @@ export function StatCard({
   )
 }
 
+/**
+ * One headline number with its related figures listed underneath, so several statistics share one card.
+ */
+export function MetricCard({
+  label,
+  value,
+  sub,
+  icon: Icon,
+  tone = 'default',
+  details,
+  footer,
+  className,
+}: {
+  label: string
+  value: ReactNode
+  sub?: ReactNode
+  icon: LucideIcon
+  tone?: keyof typeof tones
+  details: { label: string; value: ReactNode; hint?: ReactNode }[]
+  footer?: ReactNode
+  className?: string
+}) {
+  return (
+    <Card className={cn('gap-0 py-0', className)}>
+      <div className="flex items-start justify-between gap-3 p-4">
+        <div className="min-w-0">
+          <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">{label}</p>
+          <p className="mt-1.5 text-3xl font-semibold tabular-nums">{value}</p>
+          {sub && <p className="text-muted-foreground mt-1 text-xs">{sub}</p>}
+        </div>
+        <div className={cn('shrink-0 rounded-lg p-2', tones[tone])}>
+          <Icon className="size-5" />
+        </div>
+      </div>
+      <dl className="bg-muted/30 mt-auto divide-y border-t text-sm">
+        {details.map((d) => (
+          <div key={d.label} className="flex items-baseline justify-between gap-3 px-4 py-2">
+            <dt className="text-muted-foreground min-w-0">{d.label}</dt>
+            <dd className="text-right">
+              <span className="font-semibold tabular-nums">{d.value}</span>
+              {d.hint && <span className="text-muted-foreground block text-xs">{d.hint}</span>}
+            </dd>
+          </div>
+        ))}
+        {footer && <div className="px-4 py-2">{footer}</div>}
+      </dl>
+    </Card>
+  )
+}
+
 const statusVariant: Record<string, 'available' | 'occupied' | 'reserved' | 'inactive' | 'event' | 'secondary' | 'destructive' | 'default'> = {
   AVAILABLE: 'available',
   OCCUPIED: 'occupied',
@@ -86,6 +147,9 @@ const statusVariant: Record<string, 'available' | 'occupied' | 'reserved' | 'ina
   IN_REVIEW: 'reserved',
   RESOLVED: 'available',
   DISMISSED: 'inactive',
+  SUBMITTED: 'occupied',
+  UNDER_REVIEW: 'reserved',
+  IN_PROGRESS: 'event',
 }
 
 export function StatusBadge({ status }: { status: SpaceStatus | TxnStatus | string }) {
@@ -105,7 +169,7 @@ export function Pagination({ page, count, pageSize, onPage }: { page: number; co
   const from = count ? (page - 1) * pageSize + 1 : 0
   const to = Math.min(page * pageSize, count)
   return (
-    <div className="no-print flex items-center justify-between gap-2 border-t px-4 pt-4 text-sm">
+    <div className="no-print flex flex-wrap items-center justify-between gap-2 border-t px-4 pt-4 text-sm">
       <span className="text-muted-foreground">
         {from}–{to} of {count}
       </span>
@@ -236,7 +300,7 @@ export function Spinner({ className }: { className?: string }) {
 }
 
 export function SearchInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
-  return <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder ?? 'Search…'} className="sm:max-w-xs" />
+  return <Input type="search" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder ?? 'Search…'} aria-label={placeholder ?? 'Search'} className="w-full sm:max-w-xs" />
 }
 
 export function Card2({ children, className }: { children: ReactNode; className?: string }) {

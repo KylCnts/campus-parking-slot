@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { Loader2, Pencil, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { CategoryBadge, ConfirmDialog, EmptyState, LoadingRow, PageHeader, Pagination, SearchInput } from '@/components/shared'
+import { CategoryBadge, ConfirmDialog, EmptyState, LoadingRow, Pagination, SearchInput, SectionHeader } from '@/components/shared'
+import { VehicleColor, VehicleColorPicker } from '@/components/vehicle-color'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -34,6 +35,7 @@ function VehicleForm({ vehicle, onDone }: { vehicle: Vehicle | null; onDone: () 
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
+    if (!f.color) return setErrors({ color: 'Select the vehicle color.' })
     setBusy(true)
     try {
       const body = { ...f, owner: f.owner ? Number(f.owner) : null }
@@ -91,11 +93,19 @@ function VehicleForm({ vehicle, onDone }: { vehicle: Vehicle | null; onDone: () 
             ))}
           </Select>
         </Field>
-        <Field label="Color" error={errors.color}>
-          <Input value={f.color} onChange={set('color')} />
-        </Field>
-        <Field label="Vehicle Brand / Model" error={errors.brand_model}>
+        <Field label="Vehicle Brand / Model" error={errors.brand_model} className="sm:col-span-2">
           <Input value={f.brand_model} onChange={set('brand_model')} maxLength={100} placeholder="Honda Click 125i" />
+        </Field>
+        <Field label="Color" error={errors.color} className="sm:col-span-2">
+          <VehicleColorPicker
+            name="admin-vehicle-color"
+            value={f.color}
+            invalid={!!errors.color}
+            onChange={(color) => {
+              setF({ ...f, color })
+              setErrors((prev) => ({ ...prev, color: '' }))
+            }}
+          />
         </Field>
       </div>
       <div className="flex items-center gap-3">
@@ -125,8 +135,7 @@ export default function VehiclesPage() {
 
   return (
     <div>
-      <PageHeader
-        title="Vehicle Management"
+      <SectionHeader
         description="All vehicles registered for campus parking."
         actions={
           <Button onClick={() => setEditing(null)}>
@@ -135,14 +144,14 @@ export default function VehiclesPage() {
         }
       />
       <Card className="gap-0 py-0">
-        <div className="flex flex-col gap-3 border-b p-4 sm:flex-row">
+        <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:flex-wrap">
           <SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1) }} placeholder="Search plate, owner, ID, color…" />
-          <Select value={category} onChange={(e) => { setCategory(e.target.value); setPage(1) }} className="sm:w-44">
+          <Select value={category} onChange={(e) => { setCategory(e.target.value); setPage(1) }} className="sm:w-44" aria-label="Category">
             <option value="">All categories</option>
             <option value="STUDENT">Student Assistant</option>
             <option value="FACULTY">Faculty</option>
           </Select>
-          <Select value={vtype} onChange={(e) => { setVtype(e.target.value); setPage(1) }} className="sm:w-44">
+          <Select value={vtype} onChange={(e) => { setVtype(e.target.value); setPage(1) }} className="sm:w-44" aria-label="Vehicle type">
             <option value="">All types</option>
             {meta?.vehicle_types.map((o) => (
               <option key={o.value} value={o.value}>
@@ -151,7 +160,7 @@ export default function VehiclesPage() {
             ))}
           </Select>
         </div>
-        <Table>
+        <Table stack>
           <TableHeader>
             <TableRow>
               <TableHead>ID</TableHead>
@@ -172,23 +181,25 @@ export default function VehiclesPage() {
             ) : (
               vehicles.data?.results.map((v) => (
                 <TableRow key={v.id}>
-                  <TableCell className="text-muted-foreground">#{v.id}</TableCell>
-                  <TableCell className="font-mono font-semibold">{v.plate_number}</TableCell>
-                  <TableCell>
-                    <p>{v.owner_display}</p>
-                    <p className="text-muted-foreground text-xs">{v.owner_id_number ?? (v.owner ? '' : 'Gate-registered')}</p>
+                  <TableCell label="ID" className="text-muted-foreground">#{v.id}</TableCell>
+                  <TableCell label="Plate number" className="font-mono font-semibold">{v.plate_number}</TableCell>
+                  <TableCell label="Owner">
+                    <div>
+                      <p>{v.owner_display}</p>
+                      <p className="text-muted-foreground text-xs">{v.owner_id_number ?? (v.owner ? '' : 'Gate-registered')}</p>
+                    </div>
                   </TableCell>
-                  <TableCell>{v.brand_model || '—'}</TableCell>
-                  <TableCell>{v.vehicle_type_display}</TableCell>
-                  <TableCell>{v.color || '—'}</TableCell>
-                  <TableCell>
+                  <TableCell label="Brand / model">{v.brand_model || '—'}</TableCell>
+                  <TableCell label="Type">{v.vehicle_type_display}</TableCell>
+                  <TableCell label="Color"><VehicleColor color={v.color} /></TableCell>
+                  <TableCell label="Category">
                     <CategoryBadge category={v.category} />
                   </TableCell>
-                  <TableCell>
+                  <TableCell label="Status">
                     {v.is_parked ? <Badge variant="occupied">Parked</Badge> : v.is_active ? <Badge variant="secondary">Off campus</Badge> : <Badge variant="inactive">Inactive</Badge>}
                   </TableCell>
-                  <TableCell className="text-muted-foreground text-xs">{fmtDate(v.created_at)}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell label="Registered" className="text-muted-foreground text-xs">{fmtDate(v.created_at)}</TableCell>
+                  <TableCell className="text-right max-md:justify-end max-md:border-t max-md:pt-2">
                     <Button variant="ghost" size="icon" className="size-8" onClick={() => setEditing(v)} aria-label="Edit">
                       <Pencil />
                     </Button>

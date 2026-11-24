@@ -140,6 +140,71 @@
   body {
     @apply bg-background text-foreground antialiased;
   }
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+}
+
+/* Phones: tables marked `stack` show each row as a labelled card instead of scrolling sideways.
+   Screen only, so printed reports always keep the normal table layout. */
+@media screen and (max-width: 767.98px) {
+  .table-stack thead {
+    display: none;
+  }
+  .table-stack,
+  .table-stack tbody,
+  .table-stack tr,
+  .table-stack td {
+    display: block;
+    width: 100%;
+  }
+  .table-stack tr {
+    padding: 0.75rem 1rem;
+  }
+  .table-stack td {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.3rem 0;
+    max-width: none;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-align: right;
+  }
+  .table-stack td > * {
+    min-width: 0;
+  }
+  .table-stack td::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    max-width: 45%;
+    color: var(--muted-foreground);
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-align: left;
+  }
+  .table-stack td[data-label='']::before {
+    display: none;
+  }
+  .table-stack td[data-label=''] {
+    justify-content: flex-start;
+    text-align: left;
+  }
+  /* Loading and empty rows span the whole card. */
+  .table-stack td[colspan] {
+    justify-content: center;
+  }
+}
+
+/* Tab lists scroll sideways on narrow screens instead of squeezing or overflowing. */
+.tabs-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs-scroll::-webkit-scrollbar {
+  display: none;
 }
 
 @media print {

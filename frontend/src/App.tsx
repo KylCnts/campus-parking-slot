@@ -11,33 +11,28 @@ import Login from '@/pages/auth/Login'
 import Register from '@/pages/auth/Register'
 import ResetPassword from '@/pages/auth/ResetPassword'
 
-import ActivityLogs from '@/pages/admin/ActivityLogs'
 import AdminDashboard from '@/pages/admin/AdminDashboard'
-import AuditTrail from '@/pages/admin/AuditTrail'
-import Verifications from '@/pages/admin/Verifications'
 import EmailHistory from '@/pages/admin/EmailHistory'
 import EventParking from '@/pages/admin/EventParking'
 import Analytics from '@/pages/admin/Analytics'
+import LogsAudit from '@/pages/admin/LogsAudit'
 import ParkingSpaces from '@/pages/admin/ParkingSpaces'
 import Reports from '@/pages/admin/Reports'
 import SettingsPage from '@/pages/admin/Settings'
-import UsersPage from '@/pages/admin/Users'
-import VehiclesPage from '@/pages/admin/Vehicles'
-
-import ParkedVehicles from '@/pages/security/ParkedVehicles'
-import VehicleEntry from '@/pages/security/VehicleEntry'
-import VehicleExit from '@/pages/security/VehicleExit'
+import UserManagement from '@/pages/admin/UserManagement'
+import UserReports from '@/pages/admin/UserReports'
 
 import Guidelines from '@/pages/user/Guidelines'
 import MyParking from '@/pages/user/MyParking'
+import MyReports from '@/pages/user/MyReports'
 import MyVehicle from '@/pages/user/MyVehicle'
 import UserDashboard from '@/pages/user/UserDashboard'
 
 import AccountSettings from '@/pages/common/AccountSettings'
-import Availability from '@/pages/common/Availability'
 import IncidentReports from '@/pages/common/IncidentReports'
 import NotFound from '@/pages/common/NotFound'
 import Notifications from '@/pages/common/Notifications'
+import ParkingMap from '@/pages/common/ParkingMap'
 import Profile from '@/pages/common/Profile'
 import Transactions from '@/pages/common/Transactions'
 
@@ -71,6 +66,18 @@ function PublicOnly({ children }: { children: ReactNode }) {
   return <>{children}</>
 }
 
+/**
+ * Old addresses of pages that were combined. They keep working (bookmarks and links in older notifications),
+ * and any query such as ?plate= is carried over.
+ */
+function MovedTo({ to, set }: { to: string; set?: Record<string, string> }) {
+  const location = useLocation()
+  const params = new URLSearchParams(location.search)
+  Object.entries(set ?? {}).forEach(([k, v]) => params.set(k, v))
+  const search = params.toString()
+  return <Navigate to={{ pathname: to, search: search ? `?${search}` : '' }} replace />
+}
+
 function Dashboard() {
   const { user } = useAuth()
   if (user?.role === 'ADMIN') return <AdminDashboard />
@@ -94,7 +101,8 @@ export default function App() {
         <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/availability" element={<Availability />} />
+          {/* Live map + vehicle entry + vehicle exit + parked vehicles (admin); read-only map for members. */}
+          <Route path="/parking-map" element={<ParkingMap />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/account-settings" element={<AccountSettings />} />
           <Route path="/notifications" element={<Notifications />} />
@@ -103,23 +111,29 @@ export default function App() {
           <Route path="/parking-spaces" element={only(ADMIN, <ParkingSpaces />)} />
           <Route path="/event-parking" element={only(ADMIN, <EventParking />)} />
           <Route path="/email-history" element={only(ADMIN, <EmailHistory />)} />
-          <Route path="/verifications" element={only(ADMIN, <Verifications />)} />
-          <Route path="/audit-trail" element={only(ADMIN, <AuditTrail />)} />
-          <Route path="/users" element={only(ADMIN, <UsersPage />)} />
-          <Route path="/vehicles" element={only(ADMIN, <VehiclesPage />)} />
+          <Route path="/user-management" element={only(ADMIN, <UserManagement />)} />
+          <Route path="/logs" element={only(ADMIN, <LogsAudit />)} />
+          <Route path="/user-reports" element={only(ADMIN, <UserReports />)} />
           <Route path="/reports" element={only(ADMIN, <Reports />)} />
-          <Route path="/activity-logs" element={only(ADMIN, <ActivityLogs />)} />
           <Route path="/settings" element={only(ADMIN, <SettingsPage />)} />
-
           <Route path="/transactions" element={only(ADMIN, <Transactions />)} />
           <Route path="/incident-reports" element={only(ADMIN, <IncidentReports />)} />
-          <Route path="/entry" element={only(ADMIN, <VehicleEntry />)} />
-          <Route path="/exit" element={only(ADMIN, <VehicleExit />)} />
-          <Route path="/parked" element={only(ADMIN, <ParkedVehicles />)} />
 
           <Route path="/my-parking" element={only(MEMBERS, <MyParking />)} />
           <Route path="/my-vehicle" element={only(MEMBERS, <MyVehicle />)} />
+          <Route path="/my-reports" element={only(MEMBERS, <MyReports />)} />
           <Route path="/guidelines" element={<Guidelines />} />
+
+          {/* Addresses of pages that were combined into the pages above. */}
+          <Route path="/availability" element={<MovedTo to="/parking-map" />} />
+          <Route path="/entry" element={<MovedTo to="/parking-map" />} />
+          <Route path="/exit" element={<MovedTo to="/parking-map" />} />
+          <Route path="/parked" element={<MovedTo to="/parking-map" set={{ view: 'parked' }} />} />
+          <Route path="/verifications" element={<MovedTo to="/user-management" set={{ tab: 'verification' }} />} />
+          <Route path="/users" element={<MovedTo to="/user-management" set={{ tab: 'users' }} />} />
+          <Route path="/vehicles" element={<MovedTo to="/user-management" set={{ tab: 'vehicles' }} />} />
+          <Route path="/audit-trail" element={<MovedTo to="/logs" />} />
+          <Route path="/activity-logs" element={<MovedTo to="/logs" set={{ tab: 'activity' }} />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>

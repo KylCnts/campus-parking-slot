@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight, BookOpen, Car, Map } from 'lucide-react'
+import { ArrowRight, BookOpen, Car, Map, MessageSquareWarning } from 'lucide-react'
 import { AvailabilityCard, ParkingAreasCard } from '@/components/parking'
 import { LiveIndicator, PageHeader } from '@/components/shared'
+import { VehicleColor } from '@/components/vehicle-color'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/context/AuthContext'
@@ -35,8 +36,13 @@ export default function UserDashboard() {
               </Link>
             </Button>
             <Button asChild variant="outline" size="sm">
-              <Link to="/availability">
+              <Link to="/parking-map">
                 <Map /> Open Parking Spaces
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link to="/my-reports">
+                <MessageSquareWarning /> Send a report
               </Link>
             </Button>
           </>
@@ -58,8 +64,8 @@ export default function UserDashboard() {
                   </div>
                   <div>
                     <p className="font-mono text-lg font-bold">{vehicle.plate_number}</p>
-                    <p className="text-muted-foreground text-sm capitalize">
-                      {vehicle.color} {vehicle.vehicle_type.toLowerCase()}
+                    <p className="text-muted-foreground flex flex-wrap items-center gap-x-1.5 text-sm">
+                      <VehicleColor color={vehicle.color} /> <span className="capitalize">{vehicle.vehicle_type.toLowerCase()}</span>
                     </p>
                     {vehicle.brand_model && <p className="text-muted-foreground text-sm">{vehicle.brand_model}</p>}
                   </div>

@@ -1,5 +1,6 @@
 import { Car } from 'lucide-react'
 import { CategoryBadge, EmptyState, PageHeader } from '@/components/shared'
+import { VehicleColor } from '@/components/vehicle-color'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge, Skeleton } from '@/components/ui/misc'
 import { useLiveRefresh } from '@/context/RealtimeContext'
@@ -30,13 +31,13 @@ export default function MyVehicle() {
                 <dl className="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
                   {[
                     ['Vehicle type', v.vehicle_type_display],
-                    ['Color', v.color || '—'],
+                    ['Color', <VehicleColor key="color" color={v.color} />],
                     ['Brand / model', v.brand_model || '—'],
                     ['Owner', v.owner_display],
                     ['Registered on', fmtDate(v.created_at)],
                     ['Status', v.is_active ? 'Active' : 'Inactive'],
                   ].map(([k, val]) => (
-                    <div key={k} className="flex justify-between border-b pb-2">
+                    <div key={String(k)} className="flex justify-between gap-3 border-b pb-2">
                       <dt className="text-muted-foreground">{k}</dt>
                       <dd className="font-medium">{val}</dd>
                     </div>

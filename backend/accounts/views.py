@@ -19,8 +19,6 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from parking.services import audit, close_user_connections, log_activity, notify, notify_roles, snapshot
 
-from .constants import MAX_STUDENT_ASSISTANTS
-from .limits import reserve_student_seat, student_seats_used
 from .models import User
 from .permissions import IsAdmin
 from .serializers import (
@@ -91,7 +89,7 @@ class RegisterView(generics.CreateAPIView):
             [User.Role.ADMIN],
             "Registration awaiting verification",
             f"{user.full_name} registered as {user.get_role_display()}.",
-            link="/verifications",
+            link="/user-management?tab=verification",
         )
         return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
 
@@ -219,8 +217,6 @@ class UserViewSet(viewsets.ModelViewSet):
             raise ValidationError({"detail": f"This action is not available for a {user.get_account_status_display().lower()} account."})
         previous = user.account_status
         with transaction.atomic():
-            if user.role == User.Role.STUDENT and previous == User.AccountStatus.ARCHIVED:
-                reserve_student_seat()
             user.account_status = new_status
             user.status_reason = reason
             user.save(update_fields=["account_status", "status_reason", "updated_at"])
@@ -259,6 +255,4 @@ class UserViewSet(viewsets.ModelViewSet):
             suspended=Count("id", filter=Q(account_status=User.AccountStatus.SUSPENDED)),
             archived=Count("id", filter=Q(account_status=User.AccountStatus.ARCHIVED)),
         )
-        agg["student_seats_used"] = student_seats_used()
-        agg["student_seats_limit"] = MAX_STUDENT_ASSISTANTS
         return Response(agg)

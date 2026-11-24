@@ -1,4 +1,4 @@
-"""Validation and safe re-encoding of uploaded school ID photos."""
+"""Validation and safe re-encoding of uploaded images (school ID photos and report attachments)."""
 import io
 import os
 import uuid
@@ -14,7 +14,7 @@ ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png"}
 ALLOWED_FORMATS = {"JPEG": ("jpg", "image/jpeg"), "PNG": ("png", "image/png")}
 
 
-def clean_school_id(upload):
+def clean_image(upload, min_side=MIN_SIDE, too_small="The image is too small to read. Upload a clearer photo."):
     """Check the real file content and return a freshly encoded copy without metadata."""
     if os.path.splitext(upload.name or "")[1].lower() not in ALLOWED_EXTENSIONS:
         raise serializers.ValidationError("Upload a JPG, JPEG, or PNG image.")
@@ -29,8 +29,8 @@ def clean_school_id(upload):
             raise serializers.ValidationError("Upload a JPG, JPEG, or PNG image.")
         if width * height > MAX_PIXELS:
             raise serializers.ValidationError("The image dimensions are too large.")
-        if min(width, height) < MIN_SIDE:
-            raise serializers.ValidationError("The image is too small to read. Upload a clearer photo.")
+        if min(width, height) < min_side:
+            raise serializers.ValidationError(too_small)
         probe.verify()
         upload.seek(0)
         image = ImageOps.exif_transpose(Image.open(upload))
@@ -47,3 +47,11 @@ def clean_school_id(upload):
     else:
         image.save(output, "PNG")
     return ContentFile(output.getvalue(), name=f"{uuid.uuid4().hex}.{extension}")
+
+
+def clean_school_id(upload):
+    return clean_image(upload)
+
+
+def image_content_type(name):
+    return "image/png" if (name or "").lower().endswith(".png") else "image/jpeg"

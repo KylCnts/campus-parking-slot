@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from accounts.serializers import validate_plate
+from accounts.serializers import clean_vehicle_color, validate_plate
 
 from .models import (
     ActivityLog,
@@ -118,6 +118,7 @@ class VehicleSerializer(serializers.ModelSerializer):
     owner_account_status = serializers.CharField(source="owner.account_status", read_only=True, default=None)
     category_display = serializers.CharField(source="get_category_display", read_only=True)
     vehicle_type_display = serializers.CharField(source="get_vehicle_type_display", read_only=True)
+    color = serializers.CharField(max_length=40, required=False, allow_blank=True)
     is_parked = serializers.SerializerMethodField()
 
     class Meta:
@@ -161,7 +162,15 @@ class VehicleSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("This plate number is already registered.")
         return plate
 
+    def validate_color(self, value):
+        # Older records may hold a free-text color; it is kept until someone changes it.
+        if self.instance is not None and value == self.instance.color:
+            return value
+        return clean_vehicle_color(value)
+
     def validate(self, attrs):
+        if self.instance is None and not attrs.get("color"):
+            raise serializers.ValidationError({"color": "Select a vehicle color from the list."})
         owner = attrs.get("owner", getattr(self.instance, "owner", None))
         owner_name = attrs.get("owner_name", getattr(self.instance, "owner_name", ""))
         if not owner and not owner_name:

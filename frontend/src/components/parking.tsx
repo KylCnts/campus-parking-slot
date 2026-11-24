@@ -56,18 +56,22 @@ export function ParkingAreasCard({ areas }: { areas?: ParkingArea[] }) {
       <CardHeader>
         <CardTitle className="text-base">Parking areas</CardTitle>
       </CardHeader>
-      <CardContent className="grid gap-3 sm:grid-cols-2">
+      {/*
+        grid-cols-1 is needed on phones: without an explicit column the grid sizes it to the widest unbroken
+        content (the truncated location line), which pushed every area box past the card's edge.
+      */}
+      <CardContent className="grid grid-cols-1 gap-3 px-3 sm:grid-cols-2 sm:px-5">
         {!areas
           ? [0, 1].map((i) => <Skeleton key={i} className="h-32" />)
           : rows.map((a) => {
               const pct = Math.round(((a.available ?? a.available_spaces) / a.total_spaces) * 100)
               return (
-                <div key={a.id} className="rounded-lg border p-4">
+                <div key={a.id} className="min-w-0 rounded-lg border p-3 sm:p-4">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="font-medium">{a.name}</p>
-                      <p className="text-muted-foreground flex items-center gap-1 text-xs">
-                        <MapPin className="size-3 shrink-0" /> <span className="truncate">{a.location || a.code}</span>
+                      <p className="text-muted-foreground flex min-w-0 items-center gap-1 text-xs">
+                        <MapPin className="size-3 shrink-0" /> <span className="min-w-0 truncate">{a.location || a.code}</span>
                       </p>
                     </div>
                     <p className="text-muted-foreground shrink-0 text-xs tabular-nums">Maximum {a.effective_capacity ?? a.total_spaces}{a.restricted ? ` of ${a.maximum}` : ''}</p>

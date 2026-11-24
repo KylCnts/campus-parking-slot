@@ -1,5 +1,5 @@
 import { useState, type KeyboardEvent, type ReactNode } from 'react'
-import { Minus, Plus, RotateCcw } from 'lucide-react'
+import { LayoutGrid, Map as MapIcon, Minus, Plus, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { MapSpace, SpaceStatus } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -106,14 +106,14 @@ function SitePlan() {
       <Label x={880} y={1116} size={17} spacing={3}>CAR PARKING</Label>
       <Label x={840} y={814} size={17} spacing={3}>CAR PARKING</Label>
       <Label x={800} y={366} size={17} spacing={3}>CAR PARKING</Label>
-      <Label x={1490} y={480} size={17} rotate={-90} spacing={3}>CAR PARKING</Label>
+      <Label x={1466} y={480} size={17} rotate={-90} spacing={3}>CAR PARKING</Label>
 
       {/* Trees */}
       <Tree x={268} y={716} r={17} />
       <Tree x={596} y={716} r={17} />
       <Tree x={754} y={716} r={17} />
       <Tree x={1070} y={716} r={17} />
-      <Tree x={1486} y={755} r={17} />
+      <Tree x={1465} y={755} r={17} />
     </g>
   )
 }
@@ -172,6 +172,60 @@ export function MapLegend({ spaces }: { spaces?: MapSpace[] }) {
   )
 }
 
+/** Large tappable slot buttons grouped by parking area: the easiest way to pick a slot on a phone. */
+function SlotList({ spaces, onSlotClick, selectedIds, isDimmed, flashSlots }: { spaces: MapSpace[]; onSlotClick: (s: MapSpace) => void; selectedIds?: Set<number>; isDimmed?: (s: MapSpace) => boolean; flashSlots?: Set<string> }) {
+  const areas = new Map<string, MapSpace[]>()
+  for (const s of spaces) areas.set(s.area_name, [...(areas.get(s.area_name) ?? []), s])
+  return (
+    <div className="space-y-4">
+      {[...areas.entries()].map(([area, slots]) => (
+        <section key={area} aria-label={area}>
+          <h3 className="mb-2 text-sm font-semibold">
+            {area} <span className="text-muted-foreground font-normal">· {slots.filter((s) => s.status === 'AVAILABLE').length} of {slots.length} available</span>
+          </h3>
+          <div className="grid grid-cols-3 gap-2 min-[420px]:grid-cols-4 sm:grid-cols-6 lg:grid-cols-8">
+            {slots.map((s) => {
+              const meta = STATUS_META[s.status]
+              const selected = !!selectedIds?.has(s.id)
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => onSlotClick(s)}
+                  aria-pressed={selected}
+                  aria-label={`${s.slot_type === 'MOTORCYCLE' ? 'Motorcycle' : 'Car'} slot ${s.slot_number}, ${meta.label}, ${s.category_display}${s.is_mine ? ', your vehicle' : ''}`}
+                  className={cn(
+                    'focus-visible:ring-ring flex min-h-14 cursor-pointer flex-col items-center justify-center rounded-md px-1 py-1.5 text-center leading-tight outline-none focus-visible:ring-[3px] focus-visible:ring-offset-2',
+                    (selected || s.is_mine) && 'ring-foreground ring-2 ring-offset-2',
+                    isDimmed?.(s) && 'opacity-35',
+                    flashSlots?.has(s.slot_number) && 'map-slot-flash',
+                  )}
+                  style={{ background: meta.fill, color: meta.ink }}
+                >
+                  <span className="text-sm font-bold">{s.slot_number}</span>
+                  <span className="text-[10px] font-semibold tracking-wide uppercase">{s.is_mine ? 'Yours' : SHORT_STATUS[s.status]}</span>
+                  <span className="text-[10px] opacity-90">{s.category === 'STUDENT' ? 'Student' : 'Faculty'}</span>
+                </button>
+              )
+            })}
+          </div>
+        </section>
+      ))}
+    </div>
+  )
+}
+
+type MapView = 'map' | 'list'
+const VIEW_KEY = 'cp_map_view'
+
+function readView(): MapView {
+  try {
+    return localStorage.getItem(VIEW_KEY) === 'list' ? 'list' : 'map'
+  } catch {
+    return 'map'
+  }
+}
+
 export default function ParkingMap2D({
   spaces,
   onSlotClick,
@@ -186,38 +240,69 @@ export default function ParkingMap2D({
   flashSlots?: Set<string>
 }) {
   const [zoom, setZoom] = useState(1)
+  const [view, setViewState] = useState<MapView>(readView)
+  const setView = (v: MapView) => {
+    setViewState(v)
+    try {
+      localStorage.setItem(VIEW_KEY, v)
+    } catch {
+      /* the choice is only a convenience */
+    }
+  }
   const placed = spaces.filter((s) => s.map_x != null && s.map_y != null && s.map_w != null && s.map_h != null)
   const unplaced = spaces.filter((s) => !placed.includes(s))
 
   return (
-    <div className="space-y-3">
+    <div className="min-w-0 space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <MapLegend spaces={spaces} />
-        <div className="flex items-center gap-1">
-          <Button type="button" variant="outline" size="icon" className="size-8" aria-label="Zoom out" disabled={zoom <= 1} onClick={() => setZoom((z) => Math.max(1, z - 0.25))}><Minus /></Button>
-          <span className="w-11 text-center text-xs tabular-nums">{Math.round(zoom * 100)}%</span>
-          <Button type="button" variant="outline" size="icon" className="size-8" aria-label="Zoom in" disabled={zoom >= 2.5} onClick={() => setZoom((z) => Math.min(2.5, z + 0.25))}><Plus /></Button>
-          <Button type="button" variant="outline" size="icon" className="size-8" aria-label="Reset zoom" onClick={() => setZoom(1)}><RotateCcw /></Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <div role="group" aria-label="View" className="bg-muted flex rounded-lg p-[3px] text-sm">
+            {(['map', 'list'] as const).map((v) => (
+              <button
+                key={v}
+                type="button"
+                aria-pressed={view === v}
+                onClick={() => setView(v)}
+                className={cn('focus-visible:ring-ring/50 flex h-7 cursor-pointer items-center gap-1.5 rounded-md px-2.5 font-medium outline-none focus-visible:ring-[3px]', view === v ? 'bg-card shadow-sm' : 'text-muted-foreground')}
+              >
+                {v === 'map' ? <MapIcon className="size-3.5" /> : <LayoutGrid className="size-3.5" />}
+                {v === 'map' ? 'Map' : 'List'}
+              </button>
+            ))}
+          </div>
+          {view === 'map' && (
+            <div className="flex items-center gap-1">
+              <Button type="button" variant="outline" size="icon" className="size-8" aria-label="Zoom out" disabled={zoom <= 1} onClick={() => setZoom((z) => Math.max(1, z - 0.25))}><Minus /></Button>
+              <span className="w-11 text-center text-xs tabular-nums" aria-live="polite">{Math.round(zoom * 100)}%</span>
+              <Button type="button" variant="outline" size="icon" className="size-8" aria-label="Zoom in" disabled={zoom >= 3} onClick={() => setZoom((z) => Math.min(3, z + 0.25))}><Plus /></Button>
+              <Button type="button" variant="outline" size="icon" className="size-8" aria-label="Reset zoom" onClick={() => setZoom(1)}><RotateCcw /></Button>
+            </div>
+          )}
         </div>
       </div>
       <p className="text-muted-foreground text-xs">
         <strong className="text-foreground font-semibold">S</strong> marks the 3 student assistant motorcycle spaces. All other spaces are for faculty.
-        <span className="lg:hidden"> Swipe sideways to see the whole map.</span>
+        {view === 'map' && <span className="lg:hidden"> Swipe inside the map to see all of it, or switch to List for larger slot buttons.</span>}
       </p>
-      <div className={cn('overflow-auto rounded-lg border', zoom > 1 && 'max-h-[85vh]')}>
-        <svg viewBox="0 0 1800 1400" role="group" aria-label="Top-down map of the campus parking area" className="block h-auto" style={{ width: `${zoom * 100}%`, minWidth: 960 * zoom }}>
-          <SitePlan />
-          {placed.map((s) => (
-            <Slot key={s.id} space={s} selected={!!selectedIds?.has(s.id)} dimmed={!!isDimmed?.(s)} flash={!!flashSlots?.has(s.slot_number)} onClick={onSlotClick} />
-          ))}
-        </svg>
-      </div>
+      {view === 'map' ? (
+        <div className={cn('overscroll-x-contain overflow-auto rounded-lg border', zoom > 1 && 'max-h-[80vh]')}>
+          <svg viewBox="0 0 1800 1400" role="group" aria-label="Top-down map of the campus parking area" className="block h-auto max-w-none" style={{ width: `${zoom * 100}%`, minWidth: 900 * zoom }}>
+            <SitePlan />
+            {placed.map((s) => (
+              <Slot key={s.id} space={s} selected={!!selectedIds?.has(s.id)} dimmed={!!isDimmed?.(s)} flash={!!flashSlots?.has(s.slot_number)} onClick={onSlotClick} />
+            ))}
+          </svg>
+        </div>
+      ) : (
+        <SlotList spaces={placed} onSlotClick={onSlotClick} selectedIds={selectedIds} isDimmed={isDimmed} flashSlots={flashSlots} />
+      )}
       {unplaced.length > 0 && (
         <div className="rounded-lg border p-3">
           <p className="text-muted-foreground mb-2 text-xs font-medium">Other parking slots (not placed on the map)</p>
           <div className="flex flex-wrap gap-2">
             {unplaced.map((s) => (
-              <button key={s.id} type="button" onClick={() => onSlotClick(s)} className="cursor-pointer rounded-md px-3 py-1.5 text-xs font-semibold" style={{ background: STATUS_META[s.status].fill, color: STATUS_META[s.status].ink }}>
+              <button key={s.id} type="button" onClick={() => onSlotClick(s)} className="min-h-9 cursor-pointer rounded-md px-3 py-1.5 text-xs font-semibold" style={{ background: STATUS_META[s.status].fill, color: STATUS_META[s.status].ink }}>
                 {s.slot_number}
               </button>
             ))}
