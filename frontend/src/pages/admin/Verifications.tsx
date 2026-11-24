@@ -1,7 +1,8 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { BadgeCheck, Eye, ImageOff, Loader2, ShieldCheck, X } from 'lucide-react'
 import { toast } from 'sonner'
-import { ConfirmDialog, EmptyState, LoadingRow, PageHeader, Pagination, SearchInput, StatusBadge } from '@/components/shared'
+import { ConfirmDialog, EmptyState, LoadingRow, Pagination, SearchInput, SectionHeader, StatusBadge } from '@/components/shared'
+import { VehicleColor } from '@/components/vehicle-color'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -83,7 +84,7 @@ function RejectDialog({ item, onClose, onDone }: { item: Verification; onClose: 
   )
 }
 
-export default function Verifications() {
+export default function Verifications({ onDecision }: { onDecision?: () => void } = {}) {
   const [status, setStatus] = useState('PENDING')
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
@@ -95,7 +96,7 @@ export default function Verifications() {
 
   return (
     <div>
-      <PageHeader title="School ID Verification" description="Review each registration and its DLL School ID before granting access." />
+      <SectionHeader description="Review each registration and its DLL School ID before granting access." />
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Tabs value={status} onValueChange={(v) => { setStatus(v); setPage(1) }}>
           <TabsList>
@@ -107,7 +108,7 @@ export default function Verifications() {
         <SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1) }} placeholder="Search name, email, ID, plate…" />
       </div>
       <Card className="gap-0 py-0">
-        <Table>
+        <Table stack>
           <TableHeader>
             <TableRow>
               <TableHead>Applicant</TableHead>
@@ -122,25 +123,32 @@ export default function Verifications() {
           <TableBody>
             {list.loading && !list.data ? <LoadingRow cols={7} /> : list.data?.results.map((v) => (
               <TableRow key={v.id}>
-                <TableCell>
-                  <p className="font-medium">{v.applicant_name}</p>
-                  <p className="text-muted-foreground text-xs">{v.applicant_email}</p>
-                  <p className="text-muted-foreground text-xs">Registered {fmtDateTime(v.submitted_at)}</p>
+                <TableCell label="Applicant">
+                  <div>
+                    <p className="font-medium">{v.applicant_name}</p>
+                    <p className="text-muted-foreground text-xs break-all">{v.applicant_email}</p>
+                    <p className="text-muted-foreground text-xs">Registered {fmtDateTime(v.submitted_at)}</p>
+                  </div>
                 </TableCell>
-                <TableCell>{v.user_type}</TableCell>
-                <TableCell className="font-mono text-xs">{v.id_number ?? '—'}</TableCell>
-                <TableCell className="max-w-56 whitespace-normal text-xs">{v.department || '—'}{v.year_level ? ` · ${v.year_level}` : ''}</TableCell>
-                <TableCell className="text-xs">
-                  <p className="font-mono font-semibold">{v.vehicle?.plate_number ?? '—'}</p>
-                  <p className="text-muted-foreground">{[v.vehicle?.vehicle_type, v.vehicle?.brand_model].filter(Boolean).join(' · ')}</p>
+                <TableCell label="User type">{v.user_type}</TableCell>
+                <TableCell label="ID number" className="font-mono text-xs">{v.id_number ?? '—'}</TableCell>
+                <TableCell label="Course / department" className="max-w-56 whitespace-normal text-xs">{v.department || '—'}{v.year_level ? ` · ${v.year_level}` : ''}</TableCell>
+                <TableCell label="Vehicle" className="text-xs">
+                  <div>
+                    <p className="font-mono font-semibold">{v.vehicle?.plate_number ?? '—'}</p>
+                    <p className="text-muted-foreground">{[v.vehicle?.vehicle_type, v.vehicle?.brand_model].filter(Boolean).join(' · ')}</p>
+                    {v.vehicle?.color && <VehicleColor color={v.vehicle.color} className="text-muted-foreground" />}
+                  </div>
                 </TableCell>
-                <TableCell>
-                  <StatusBadge status={v.status} />
-                  {v.decided_by_name && <p className="text-muted-foreground mt-1 text-xs">{v.decided_by_name} · {fmtDateTime(v.decided_at)}</p>}
-                  {v.rejection_reason && <p className="text-muted-foreground mt-1 max-w-52 text-xs whitespace-normal">{v.rejection_reason}</p>}
+                <TableCell label="Status">
+                  <div>
+                    <StatusBadge status={v.status} />
+                    {v.decided_by_name && <p className="text-muted-foreground mt-1 text-xs">{v.decided_by_name} · {fmtDateTime(v.decided_at)}</p>}
+                    {v.rejection_reason && <p className="text-muted-foreground mt-1 max-w-52 text-xs whitespace-normal">{v.rejection_reason}</p>}
+                  </div>
                 </TableCell>
-                <TableCell>
-                  <div className="flex w-28 flex-col gap-1">
+                <TableCell className="max-md:border-t max-md:pt-2">
+                  <div className="flex w-28 flex-col gap-1 max-md:w-full max-md:flex-row max-md:flex-wrap max-md:[&>*]:flex-1">
                     {v.has_image ? <Button size="sm" variant="outline" onClick={() => setViewing(v)}><Eye /> View ID</Button> : <span className="text-muted-foreground flex items-center gap-1.5 text-xs"><ImageOff className="size-3.5" /> Deleted</span>}
                     {v.status === 'PENDING' && <Button size="sm" variant="success" onClick={() => setApproving(v)}><BadgeCheck /> Approve</Button>}
                     {v.status === 'PENDING' && <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setRejecting(v)}><X /> Reject</Button>}
@@ -154,7 +162,7 @@ export default function Verifications() {
         <div className="pb-4"><Pagination page={page} count={list.data?.count ?? 0} pageSize={10} onPage={setPage} /></div>
       </Card>
       {viewing && <IdPreview item={viewing} onClose={() => setViewing(null)} />}
-      {rejecting && <RejectDialog item={rejecting} onClose={() => setRejecting(null)} onDone={() => { setRejecting(null); list.reload() }} />}
+      {rejecting && <RejectDialog item={rejecting} onClose={() => setRejecting(null)} onDone={() => { setRejecting(null); list.reload(); onDecision?.() }} />}
       <ConfirmDialog
         open={!!approving}
         onOpenChange={(o) => !o && setApproving(null)}
@@ -166,6 +174,7 @@ export default function Verifications() {
             await api.post(`/verifications/${approving!.id}/approve/`)
             toast.success('Registration approved. The school ID image was deleted.')
             list.reload()
+            onDecision?.()
           } catch (err) {
             toast.error(apiError(err))
           }

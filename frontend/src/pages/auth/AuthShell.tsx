@@ -3,7 +3,7 @@ import { CircleCheck, ParkingSquare, Radio, ShieldCheck } from 'lucide-react'
 
 export default function AuthShell({ title, subtitle, children, wide }: { title: string; subtitle?: string; children: ReactNode; wide?: boolean }) {
   return (
-    <div className="grid min-h-screen lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+    <div className="grid min-h-screen min-h-dvh lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
       <div className="bg-sidebar relative hidden overflow-hidden p-10 text-white lg:flex lg:flex-col">
         <div className="flex items-center gap-2.5">
           <div className="bg-primary flex size-10 items-center justify-center rounded-lg">
@@ -38,7 +38,7 @@ export default function AuthShell({ title, subtitle, children, wide }: { title: 
           ))}
         </div>
       </div>
-      <div className="flex items-center justify-center px-4 py-10 sm:px-8">
+      <div className="flex min-w-0 items-center justify-center px-4 py-8 sm:px-8 sm:py-10">
         <div className={wide ? 'w-full max-w-2xl' : 'w-full max-w-sm'}>
           <div className="mb-6 flex items-center gap-2 lg:hidden">
             <div className="bg-primary flex size-9 items-center justify-center rounded-lg text-white">

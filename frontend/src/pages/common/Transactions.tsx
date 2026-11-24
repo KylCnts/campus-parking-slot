@@ -140,9 +140,19 @@ export default function Transactions() {
             </Select>
             <Input type="date" value={from} onChange={(e) => reset(setFrom)(e.target.value)} aria-label="From date" title="Entry date from" />
             <Input type="date" value={to} onChange={(e) => reset(setTo)(e.target.value)} aria-label="To date" title="Entry date to" />
+            {/* Column headers (which sort the table) are hidden on phones, so sorting is offered here instead. */}
+            <Select value={ordering} onChange={(e) => reset(setOrdering)(e.target.value)} aria-label="Sort" className="col-span-2 md:hidden">
+              <option value="-entry_time">Newest entry first</option>
+              <option value="entry_time">Oldest entry first</option>
+              <option value="-exit_time">Latest exit first</option>
+              <option value="vehicle__plate_number">Plate (A–Z)</option>
+              <option value="space__slot_number">Space (A–Z)</option>
+              <option value="status">Status</option>
+              <option value="-id">Transaction ID (newest)</option>
+            </Select>
           </div>
         </div>
-        <Table>
+        <Table stack>
           <TableHeader>
             <TableRow>
               <SortHead field="id">Txn ID</SortHead>
@@ -165,26 +175,28 @@ export default function Transactions() {
             ) : (
               list.data?.results.map((t) => (
                 <TableRow key={t.id}>
-                  <TableCell className="font-mono text-xs">TXN-{String(t.id).padStart(6, '0')}</TableCell>
-                  <TableCell className="font-mono font-semibold">{t.plate_number}</TableCell>
-                  <TableCell>{t.owner}</TableCell>
-                  <TableCell>
+                  <TableCell label="Txn ID" className="font-mono text-xs">TXN-{String(t.id).padStart(6, '0')}</TableCell>
+                  <TableCell label="Plate" className="font-mono font-semibold">{t.plate_number}</TableCell>
+                  <TableCell label="Owner">{t.owner}</TableCell>
+                  <TableCell label="Category">
                     <CategoryBadge category={t.category} />
                   </TableCell>
-                  <TableCell>{t.slot_number}</TableCell>
-                  <TableCell className="text-xs">{fmtDateTime(t.entry_time)}</TableCell>
-                  <TableCell className="text-xs">{fmtDateTime(t.exit_time)}</TableCell>
-                  <TableCell className="text-xs">{fmtDateTime(t.estimated_departure)}</TableCell>
-                  <TableCell>{fmtDuration(t.duration_minutes)}</TableCell>
-                  <TableCell>
+                  <TableCell label="Space">{t.slot_number}</TableCell>
+                  <TableCell label="Entry" className="text-xs">{fmtDateTime(t.entry_time)}</TableCell>
+                  <TableCell label="Exit" className="text-xs">{fmtDateTime(t.exit_time)}</TableCell>
+                  <TableCell label="Est. departure" className="text-xs">{fmtDateTime(t.estimated_departure)}</TableCell>
+                  <TableCell label="Duration">{fmtDuration(t.duration_minutes)}</TableCell>
+                  <TableCell label="Status">
                     <StatusBadge status={t.status} />
                   </TableCell>
-                  <TableCell className="text-muted-foreground text-xs">
-                    {t.entry_recorded_by_name ?? '—'}
-                    {t.exit_recorded_by_name && ` / ${t.exit_recorded_by_name}`}
+                  <TableCell label="Recorded by" className="text-muted-foreground text-xs">
+                    <span>
+                      {t.entry_recorded_by_name ?? '—'}
+                      {t.exit_recorded_by_name && ` / ${t.exit_recorded_by_name}`}
+                    </span>
                   </TableCell>
                   {isAdmin && (
-                    <TableCell>
+                    <TableCell className="max-md:justify-end">
                       {t.status === 'ACTIVE' && (
                         <Button variant="ghost" size="sm" onClick={() => setReleasing(t)} title="Release after confirming the vehicle left">
                           <LogOut /> Release

@@ -285,7 +285,7 @@ export default function ParkingSpaces() {
                 </Button>
               </div>
             </div>
-            <Table>
+            <Table stack>
               <TableHeader>
                 <TableRow>
                   <TableHead>ID</TableHead>
@@ -306,19 +306,19 @@ export default function ParkingSpaces() {
                 ) : (
                   spaces.data?.results.map((s) => (
                     <TableRow key={s.id}>
-                      <TableCell className="text-muted-foreground tabular-nums">#{s.id}</TableCell>
-                      <TableCell className="font-semibold">{s.slot_number}</TableCell>
-                      <TableCell>{s.area_name}</TableCell>
-                      <TableCell>{s.slot_type === 'MOTORCYCLE' ? 'Motorcycle' : 'Car'}</TableCell>
-                      <TableCell>
+                      <TableCell label="ID" className="text-muted-foreground tabular-nums">#{s.id}</TableCell>
+                      <TableCell label="Slot" className="font-semibold">{s.slot_number}</TableCell>
+                      <TableCell label="Area">{s.area_name}</TableCell>
+                      <TableCell label="Type">{s.slot_type === 'MOTORCYCLE' ? 'Motorcycle' : 'Car'}</TableCell>
+                      <TableCell label="Category">
                         <CategoryBadge category={s.category} />
                       </TableCell>
-                      <TableCell>
+                      <TableCell label="Status">
                         <StatusBadge status={s.status} />
                       </TableCell>
-                      <TableCell className="font-mono text-xs">{s.current_transaction?.plate_number ?? '—'}</TableCell>
-                      <TableCell className="text-muted-foreground text-xs">{fmtDateTime(s.created_at)}</TableCell>
-                      <TableCell className="text-muted-foreground text-xs">{fmtDateTime(s.updated_at)}</TableCell>
+                      <TableCell label="Parked vehicle" className="font-mono text-xs">{s.current_transaction?.plate_number ?? '—'}</TableCell>
+                      <TableCell label="Created" className="text-muted-foreground text-xs">{fmtDateTime(s.created_at)}</TableCell>
+                      <TableCell label="Last updated" className="text-muted-foreground text-xs">{fmtDateTime(s.updated_at)}</TableCell>
                       <TableCell className="text-right">
                         <Button variant="ghost" size="icon" className="size-8" onClick={() => setEditing(s)} aria-label="Edit">
                           <Pencil />

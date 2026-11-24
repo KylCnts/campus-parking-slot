@@ -70,13 +70,13 @@ export default function MyParking() {
             <CardDescription>The Admin / Security Guard records your vehicle entry at the gate. You can check available spaces on the parking map first.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button asChild variant="outline"><Link to="/availability"><Map /> View parking map</Link></Button>
+            <Button asChild variant="outline"><Link to="/parking-map"><Map /> View parking map</Link></Button>
           </CardContent>
         </Card>
       )}
       <Card className="gap-0 py-0">
         <div className="border-b px-5 py-4"><h2 className="font-semibold">Parking activity history</h2></div>
-        <Table>
+        <Table stack>
           <TableHeader>
             <TableRow>
               <TableHead>Space</TableHead>
@@ -92,14 +92,14 @@ export default function MyParking() {
           <TableBody>
             {history.loading && !history.data ? <LoadingRow cols={8} /> : history.data?.results.map((s) => (
               <TableRow key={s.id}>
-                <TableCell className="font-semibold">{s.slot_number}</TableCell>
-                <TableCell className="font-mono text-xs">{s.plate_number}</TableCell>
-                <TableCell className="text-xs">{fmtDateTime(s.entry_time)}</TableCell>
-                <TableCell className="text-xs">{fmtDateTime(s.exit_time)}</TableCell>
-                <TableCell>{fmtDuration(s.duration_minutes)}</TableCell>
-                <TableCell className="tabular-nums">{s.extension_count}</TableCell>
-                <TableCell><StatusBadge status={s.status} /></TableCell>
-                <TableCell className="text-muted-foreground text-xs">{s.release_display || '—'}</TableCell>
+                <TableCell label="Space" className="font-semibold">{s.slot_number}</TableCell>
+                <TableCell label="Vehicle" className="font-mono text-xs">{s.plate_number}</TableCell>
+                <TableCell label="Started" className="text-xs">{fmtDateTime(s.entry_time)}</TableCell>
+                <TableCell label="Ended" className="text-xs">{fmtDateTime(s.exit_time)}</TableCell>
+                <TableCell label="Duration">{fmtDuration(s.duration_minutes)}</TableCell>
+                <TableCell label="Extended" className="tabular-nums">{s.extension_count}</TableCell>
+                <TableCell label="Status"><StatusBadge status={s.status} /></TableCell>
+                <TableCell label="How it ended" className="text-muted-foreground text-xs">{s.release_display || '—'}</TableCell>
               </TableRow>
             ))}
           </TableBody>

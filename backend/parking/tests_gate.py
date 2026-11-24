@@ -10,7 +10,6 @@ from django.test import TransactionTestCase, override_settings
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from accounts.constants import STUDENT_LIMIT_MESSAGE
 from parking.layout import build_slots
 from parking.models import AuditLog, Category, ParkingArea, ParkingSpace, ParkingTransaction, Vehicle
 from parking.testing import with_id
@@ -124,12 +123,16 @@ class GateEntryTests(Base):
 
     def test_layout_and_roles(self):
         cars = [s for s in build_slots() if s["slot_type"] == "CAR"]
-        self.assertEqual({(s["map_w"], s["map_h"]) for s in cars}, {(118, 150)})
+        self.assertEqual({(s["map_w"], s["map_h"]) for s in cars if s["area"] != "D"}, {(118, 150)})
+        # The Offices Row boxes are the same size, turned sideways.
+        self.assertEqual({(s["map_w"], s["map_h"]) for s in cars if s["area"] == "D"}, {(150, 118)})
         self.assertEqual(sorted(User.Role.values), ["ADMIN", "FACULTY", "STUDENT"])
         self.assertEqual(ParkingSpace.Status.values, ["AVAILABLE", "OCCUPIED", "EVENT_RESERVED"])
 
 
-class StudentAssistantLimitTests(Base):
+class StudentAssistantRegistrationTests(Base):
+    """Student Assistant registration is no longer capped; every other registration rule still applies."""
+
     def register(self, i):
         body = {
             "role": "STUDENT", "full_name": f"Assistant {i}", "id_number": f"SA-{i}", "email": f"sa{i}@x.edu", "password": PW, "confirm_password": PW,
@@ -144,35 +147,87 @@ class StudentAssistantLimitTests(Base):
             "vehicle_plate": f"AMD {i}00", "vehicle_color": "Black", "vehicle_brand_model": "Yamaha Mio", **over,
         }
 
-    def test_registration_closes_after_three(self):
-        self.assertTrue(api().get("/api/meta/").data["student_assistant_registration_open"])
-        for i in range(3):
+    def test_registration_stays_open_beyond_three(self):
+        for i in range(5):
             self.assertEqual(self.register(i).status_code, 201)
-        closed = self.register(3)
-        self.assertEqual(closed.status_code, 400)
-        self.assertIn(STUDENT_LIMIT_MESSAGE, str(closed.data))
-        self.assertFalse(api().get("/api/meta/").data["student_assistant_registration_open"])
-        self.assertEqual(User.objects.filter(role="STUDENT").count(), 3)
+        self.assertEqual(User.objects.filter(role="STUDENT").count(), 5)
+        self.assertNotIn("student_assistant_registration_open", api().get("/api/meta/").data)
+        # Duplicate checks still apply.
+        again = self.register(0)
+        self.assertEqual(again.status_code, 400)
+        self.assertIn("email", again.data)
+        # Student assistants may still only register motorcycles.
+        body = {
+            "role": "STUDENT", "full_name": "Car Owner", "id_number": "SA-CAR", "email": "car@x.edu", "password": PW, "confirm_password": PW,
+            "department": "Bachelor of Science in Accountancy (BSA)", "contact_number": "09171234567", "vehicle_type": "CAR",
+            "vehicle_color": "Red", "vehicle_brand_model": "Toyota Vios", "plate_number": "CAR 100",
+        }
+        self.assertIn("vehicle_type", api().post("/api/auth/register/", with_id(body), format="multipart").data)
 
-    def test_admin_creates_accounts_within_the_limit(self):
+    def test_admin_creates_accounts_without_a_limit(self):
         c = api(self.admin)
         missing = c.post("/api/users/", self.admin_body(0, vehicle_plate=""), format="json")
         self.assertIn("vehicle_plate", missing.data)
-        for i in range(3):
+        for i in range(5):
             r = c.post("/api/users/", self.admin_body(i), format="json")
             self.assertEqual(r.status_code, 201, r.data)
         vehicle = Vehicle.objects.get(plate_number="AMD 000")
-        self.assertEqual((vehicle.vehicle_type, vehicle.category, vehicle.owner.account_status), ("MOTORCYCLE", "STUDENT", "APPROVED"))
-        self.assertIn(STUDENT_LIMIT_MESSAGE, str(c.post("/api/users/", self.admin_body(3), format="json").data))
+        self.assertEqual((vehicle.vehicle_type, vehicle.category, vehicle.owner.account_status, vehicle.color), ("MOTORCYCLE", "STUDENT", "APPROVED", "Black"))
         faculty = c.patch(f"/api/users/{self.faculty_user.pk}/", {"role": "STUDENT"}, format="json")
         self.assertEqual(faculty.status_code, 400)
+        self.assertNotIn("student_seats_limit", c.get("/api/users/stats/").data)
 
-    def test_archiving_frees_a_place_and_restore_respects_the_limit(self):
+    def test_archive_and_restore_without_a_limit(self):
         c = api(self.admin)
-        ids = [c.post("/api/users/", self.admin_body(i), format="json").data["id"] for i in range(3)]
+        ids = [c.post("/api/users/", self.admin_body(i), format="json").data["id"] for i in range(4)]
         c.post(f"/api/users/{ids[0]}/archive/", {"reason": "No longer an assistant"}, format="json")
-        self.assertEqual(c.post("/api/users/", self.admin_body(3), format="json").status_code, 201)
-        self.assertIn(STUDENT_LIMIT_MESSAGE, str(c.post(f"/api/users/{ids[0]}/restore/").data))
+        self.assertEqual(c.post("/api/users/", self.admin_body(4), format="json").status_code, 201)
+        restored = c.post(f"/api/users/{ids[0]}/restore/")
+        self.assertEqual(restored.status_code, 200, restored.data)
+        self.assertEqual(restored.data["account_status"], "APPROVED")
+
+
+class VehicleColorTests(Base):
+    def registration(self, color, i=0):
+        body = {
+            "role": "FACULTY", "full_name": f"Faculty {i}", "id_number": f"FC-{i}", "email": f"fc{i}@x.edu", "password": PW, "confirm_password": PW,
+            "department": "College of Business", "contact_number": "09171234567", "vehicle_type": "CAR",
+            "vehicle_color": color, "vehicle_brand_model": "Toyota Vios", "plate_number": f"CLR {i}00",
+        }
+        return api().post("/api/auth/register/", with_id(body), format="multipart")
+
+    def test_colors_are_listed(self):
+        colors = api().get("/api/meta/").data["vehicle_colors"]
+        self.assertIn("Red", [c["value"] for c in colors])
+        self.assertTrue(all(c["swatch"] for c in colors))
+
+    def test_registration_accepts_only_listed_colors(self):
+        self.assertIn("vehicle_color", self.registration("Sparkly unicorn", 1).data)
+        self.assertIn("vehicle_color", self.registration("", 2).data)
+        ok = self.registration("navy blue", 3)
+        self.assertEqual(ok.status_code, 201, ok.data)
+        self.assertEqual(Vehicle.objects.get(plate_number="CLR 300").color, "Navy Blue")
+
+    def test_admin_forms_accept_only_listed_colors(self):
+        c = api(self.admin)
+        bad_user = c.post("/api/users/", {"full_name": "SA Bad", "email": "sab@x.edu", "role": "STUDENT", "password": PW,
+                                          "vehicle_plate": "SAB 100", "vehicle_color": "#123456", "vehicle_brand_model": "Honda Beat"}, format="json")
+        self.assertIn("vehicle_color", bad_user.data)
+        body = {"plate_number": "ADM 100", "owner": self.faculty_user.pk, "category": "FACULTY", "vehicle_type": "CAR", "brand_model": "Honda City"}
+        self.assertIn("color", c.post("/api/vehicles/", body, format="json").data)
+        self.assertIn("color", c.post("/api/vehicles/", {**body, "color": "Rainbow"}, format="json").data)
+        created = c.post("/api/vehicles/", {**body, "color": "Silver"}, format="json")
+        self.assertEqual(created.status_code, 201, created.data)
+        self.assertEqual(created.data["color"], "Silver")
+
+    def test_existing_free_text_color_is_kept_until_changed(self):
+        legacy = self.faculty_user.vehicle
+        Vehicle.objects.filter(pk=legacy.pk).update(color="Pearl white")
+        c = api(self.admin)
+        kept = c.patch(f"/api/vehicles/{legacy.pk}/", {"color": "Pearl white", "brand_model": "Toyota Vios XE"}, format="json")
+        self.assertEqual(kept.status_code, 200, kept.data)
+        self.assertIn("color", c.patch(f"/api/vehicles/{legacy.pk}/", {"color": "Pearl"}, format="json").data)
+        self.assertEqual(c.patch(f"/api/vehicles/{legacy.pk}/", {"color": "White"}, format="json").data["color"], "White")
 
 
 class ResetCommandTests(Base):

@@ -47,14 +47,14 @@ export function Progress({ value, className, barClassName }: { value: number; cl
 export const Tabs = TabsPrimitive.Root
 
 export function TabsList({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.List>) {
-  return <TabsPrimitive.List className={cn('bg-muted text-muted-foreground inline-flex h-9 w-fit items-center justify-center rounded-lg p-[3px]', className)} {...props} />
+  return <TabsPrimitive.List className={cn('bg-muted text-muted-foreground tabs-scroll inline-flex h-9 w-fit items-center justify-start rounded-lg p-[3px]', className)} {...props} />
 }
 
 export function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Trigger>) {
   return (
     <TabsPrimitive.Trigger
       className={cn(
-        'data-[state=active]:bg-card data-[state=active]:text-foreground inline-flex h-full flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md px-3 py-1 text-sm font-medium whitespace-nowrap transition-all data-[state=active]:shadow-sm [&_svg]:size-4',
+        'data-[state=active]:bg-card data-[state=active]:text-foreground focus-visible:ring-ring/50 inline-flex h-full flex-1 shrink-0 cursor-pointer items-center outline-none focus-visible:ring-[3px] justify-center gap-1.5 rounded-md px-3 py-1 text-sm font-medium whitespace-nowrap transition-all data-[state=active]:shadow-sm [&_svg]:size-4',
         className,
       )}
       {...props}

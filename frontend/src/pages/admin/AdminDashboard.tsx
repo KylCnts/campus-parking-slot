@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight, CalendarClock, CalendarDays, Car, CarFront, FileWarning, GraduationCap, Mail, ParkingSquare, Presentation, ShieldCheck, SquareCheckBig, Users } from 'lucide-react'
+import { ArrowRight, CalendarClock, CalendarDays, CarFront, FileWarning, Mail, MessageSquareWarning, ParkingSquare, ShieldCheck, SquareCheckBig, Users } from 'lucide-react'
 import { ChartCard, EntriesExitsChart, OccupancyBars, shortDate } from '@/components/charts'
 import { AvailabilityCard, ParkingAreasCard } from '@/components/parking'
-import { PageHeader, StatCard, StatusBadge } from '@/components/shared'
+import { MetricCard, PageHeader, StatusBadge } from '@/components/shared'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/misc'
@@ -15,6 +15,7 @@ type Summary = AvailabilitySummary & {
   users: { students: number; faculty: number }
   today: { entries: number; exits: number }
   open_reports: number
+  open_user_reports: number
   registered_vehicles: number
   upcoming_events: number
   pending_verifications: number
@@ -66,31 +67,79 @@ export default function AdminDashboard() {
         </div>
       )}
       {!!s?.pending_verifications && (
-        <Link to="/verifications" className="border-reserved/50 bg-reserved/10 flex items-center gap-3 rounded-lg border px-4 py-3 text-sm">
+        <Link to="/user-management?tab=verification" className="border-reserved/50 bg-reserved/10 flex items-center gap-3 rounded-lg border px-4 py-3 text-sm">
           <ShieldCheck className="size-5 shrink-0" />
           <span><strong>{s.pending_verifications}</strong> registration(s) are waiting for School ID verification.</span>
-          <ArrowRight className="ml-auto size-4" />
+          <ArrowRight className="ml-auto size-4 shrink-0" />
+        </Link>
+      )}
+      {!!s?.open_user_reports && (
+        <Link to="/user-reports" className="border-occupied/30 bg-occupied/5 flex items-center gap-3 rounded-lg border px-4 py-3 text-sm">
+          <MessageSquareWarning className="size-5 shrink-0" />
+          <span><strong>{s.open_user_reports}</strong> user report(s) are open and waiting for a response.</span>
+          <ArrowRight className="ml-auto size-4 shrink-0" />
         </Link>
       )}
 
+      {/*
+        The ten original statistics, grouped into four cards. Each card keeps one headline number and lists the
+        related figures underneath. All values come from the same /dashboard/summary/ calculations as before.
+      */}
       {!s ? (
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {Array.from({ length: 12 }).map((_, i) => (
-            <Skeleton key={i} className="h-24" />
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-56" />
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <StatCard label="Total spaces" value={s.overall.total} icon={ParkingSquare} sub={`${s.car.total} car · ${s.motorcycle.total} motorcycle`} />
-          <StatCard label="Available" value={s.overall.available} icon={SquareCheckBig} tone="available" sub={`${s.overall.availability_pct}% of all spaces`} />
-          <StatCard label="Occupied" value={s.overall.occupied} icon={Car} tone="occupied" sub={`${s.overall.occupancy_pct}% occupancy`} />
-          <StatCard label="Event-reserved" value={s.overall.event_reserved} icon={CalendarClock} tone="event" sub="Held for events" />
-          <StatCard label="Upcoming events" value={s.upcoming_events} icon={CalendarDays} tone="event" sub="Published events" />
-          <StatCard label="Currently parked" value={s.currently_parked} icon={CarFront} sub={`${s.today.entries} entries · ${s.today.exits} exits today`} />
-          <StatCard label="Student spaces" value={s.student.total} icon={GraduationCap} tone="muted" sub={`${s.student.available} available`} />
-          <StatCard label="Faculty spaces" value={s.faculty.total} icon={Presentation} tone="muted" sub={`${s.faculty.available} available`} />
-          <StatCard label="Registered students" value={s.users.students} icon={Users} tone="muted" sub={`${s.registered_vehicles} vehicles registered`} />
-          <StatCard label="Registered faculty" value={s.users.faculty} icon={Users} tone="muted" sub={s.open_reports ? `${s.open_reports} open record report(s)` : 'No open record reports'} />
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <MetricCard
+            label="Available spaces"
+            value={s.overall.available}
+            sub={`${s.overall.availability_pct}% of all spaces are free`}
+            icon={SquareCheckBig}
+            tone="available"
+            details={[
+              { label: 'Total spaces', value: s.overall.total, hint: `${s.car.total} car · ${s.motorcycle.total} motorcycle` },
+              { label: 'Occupied', value: s.overall.occupied, hint: `${s.overall.occupancy_pct}% occupancy` },
+            ]}
+          />
+          <MetricCard
+            label="Currently parked"
+            value={s.currently_parked}
+            sub="Vehicles on campus right now"
+            icon={CarFront}
+            details={[
+              { label: 'Entries today', value: s.today.entries },
+              { label: 'Exits today', value: s.today.exits },
+              { label: 'Registered vehicles', value: s.registered_vehicles },
+              { label: 'Open record reports', value: s.open_reports },
+            ]}
+          />
+          <MetricCard
+            label="Registered users"
+            value={s.users.students + s.users.faculty}
+            sub="Approved student assistants and faculty"
+            icon={Users}
+            tone="muted"
+            details={[
+              { label: 'Student assistants', value: s.users.students, hint: `Student spaces: ${s.student.total} (${s.student.available} available)` },
+              { label: 'Faculty members', value: s.users.faculty, hint: `Faculty spaces: ${s.faculty.total} (${s.faculty.available} available)` },
+            ]}
+          />
+          <MetricCard
+            label="Upcoming events"
+            value={s.upcoming_events}
+            sub="Published events"
+            icon={CalendarDays}
+            tone="event"
+            details={[{ label: 'Event-reserved spaces', value: s.overall.event_reserved, hint: 'Held for events right now' }]}
+            footer={
+              <Link to="/event-parking" className="text-primary inline-flex items-center gap-1 text-xs font-medium hover:underline">
+                Manage event parking <ArrowRight className="size-3" />
+              </Link>
+            }
+          />
         </div>
       )}
 
@@ -133,15 +182,15 @@ export default function AdminDashboard() {
         <CardContent className="px-0">
           <ul className="divide-y">
             {recent.data?.results.map((t) => (
-              <li key={t.id} className="flex items-center gap-3 px-5 py-2.5 text-sm">
+              <li key={t.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 text-sm sm:flex-nowrap sm:px-5">
                 <span className={`size-2 shrink-0 rounded-full ${t.status === 'ACTIVE' ? 'bg-occupied' : 'bg-available'}`} />
-                <span className="w-24 font-mono font-semibold">{t.plate_number}</span>
+                <span className="font-mono font-semibold sm:w-24">{t.plate_number}</span>
                 <span className="text-muted-foreground hidden min-w-0 flex-1 truncate sm:block">
                   {t.owner} · {t.category_display}
                 </span>
-                <span className="w-16 font-medium">{t.slot_number}</span>
+                <span className="font-medium sm:w-16">{t.slot_number}</span>
                 <StatusBadge status={t.status === 'ACTIVE' ? 'ACTIVE' : t.status} />
-                <span className="text-muted-foreground w-24 text-right text-xs tabular-nums">{fmtTime(t.exit_time ?? t.entry_time)}</span>
+                <span className="text-muted-foreground ml-auto text-right text-xs tabular-nums sm:w-24">{fmtTime(t.exit_time ?? t.entry_time)}</span>
               </li>
             ))}
             {recent.data && !recent.data.results.length && <li className="text-muted-foreground px-5 py-6 text-center text-sm">No transactions yet.</li>}

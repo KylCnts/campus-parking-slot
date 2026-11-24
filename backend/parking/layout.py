@@ -36,8 +36,10 @@ def _slot(area, number, slot_type, x, y, w, h):
     }
 
 
-def _car(area, number, x, y):
+def _car(area, number, x, y, landscape=False):
+    """A car box. Landscape boxes are the same size turned sideways (wide rather than tall)."""
     slot_number = f"{area}-{number:02d}"
+    w, h = (CAR_HEIGHT, CAR_WIDTH) if landscape else (CAR_WIDTH, CAR_HEIGHT)
     return {
         "area": area,
         "slot_number": slot_number,
@@ -45,9 +47,16 @@ def _car(area, number, x, y):
         "slot_type": CAR,
         "map_x": x,
         "map_y": y,
-        "map_w": CAR_WIDTH,
-        "map_h": CAR_HEIGHT,
+        "map_w": w,
+        "map_h": h,
     }
+
+
+# Offices Row: the four boxes in front of the Offices are landscape (wide rather than tall).
+# Each box keeps the vertical centre of its former upright position, so it stays in front of the same part of
+# the Offices. The column sits at x=1486 so the wider boxes clear the Offices wall (and its corner at x=1640).
+OFFICES_ROW_X = 1486
+OFFICES_ROW_CENTERS_Y = [680 - i * 160 + CAR_HEIGHT / 2 for i in range(4)]
 
 
 def build_slots():
@@ -64,8 +73,8 @@ def build_slots():
         slots.append(_car("B", i + 1, 300 + i * CAR_PITCH, 641))
     for i in range(7):
         slots.append(_car("C", i + 1, 300 + i * CAR_PITCH, 196))
-    for i in range(4):
-        slots.append(_car("D", i + 1, 1512, 680 - i * 160))
+    for i, center_y in enumerate(OFFICES_ROW_CENTERS_Y):
+        slots.append(_car("D", i + 1, OFFICES_ROW_X, center_y - CAR_WIDTH / 2, landscape=True))
     return slots
 
 

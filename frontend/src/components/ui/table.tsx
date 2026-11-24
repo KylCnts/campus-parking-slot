@@ -1,10 +1,14 @@
 import * as React from 'react'
 import { cn } from '@/lib/utils'
 
-export function Table({ className, ...props }: React.ComponentProps<'table'>) {
+/**
+ * `stack` turns each row into a labelled card on phones (below 768px) instead of a wide scrolling table.
+ * Give each cell a `label` so the value keeps its column name in the stacked layout.
+ */
+export function Table({ className, stack, ...props }: React.ComponentProps<'table'> & { stack?: boolean }) {
   return (
     <div className="relative w-full overflow-x-auto">
-      <table className={cn('w-full caption-bottom text-sm', className)} {...props} />
+      <table className={cn('w-full caption-bottom text-sm', stack && 'table-stack', className)} {...props} />
     </div>
   )
 }
@@ -25,6 +29,6 @@ export function TableHead({ className, ...props }: React.ComponentProps<'th'>) {
     />
   )
 }
-export function TableCell({ className, ...props }: React.ComponentProps<'td'>) {
-  return <td className={cn('px-3 py-2.5 align-middle whitespace-nowrap', className)} {...props} />
+export function TableCell({ className, label, ...props }: React.ComponentProps<'td'> & { label?: string }) {
+  return <td data-label={label ?? ''} className={cn('px-3 py-2.5 align-middle whitespace-nowrap', className)} {...props} />
 }

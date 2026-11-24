@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Download } from 'lucide-react'
-import { EmptyState, LoadingRow, PageHeader, Pagination, SearchInput } from '@/components/shared'
+import { EmptyState, LoadingRow, Pagination, SearchInput, SectionHeader } from '@/components/shared'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input, Select } from '@/components/ui/form-controls'
@@ -25,9 +25,8 @@ export default function ActivityLogs() {
 
   return (
     <div>
-      <PageHeader
-        title="System Activity Logs"
-        description="Audit trail of sign-ins, account changes, vehicle movements and configuration updates."
+      <SectionHeader
+        description="Sign-ins, account changes, vehicle movements and configuration updates."
         actions={
           <Button
             variant="outline"
@@ -44,21 +43,21 @@ export default function ActivityLogs() {
         }
       />
       <Card className="gap-0 py-0">
-        <div className="flex flex-col gap-3 border-b p-4 lg:flex-row lg:items-center">
+        <div className="flex flex-col gap-3 border-b p-4 lg:flex-row lg:flex-wrap lg:items-center">
           <SearchInput value={search} onChange={(v) => { setSearch(v); setPage(1) }} placeholder="Search user or description…" />
-          <Select value={action} onChange={(e) => { setAction(e.target.value); setPage(1) }} className="lg:w-56">
+          <Select value={action} onChange={(e) => { setAction(e.target.value); setPage(1) }} className="lg:w-56" aria-label="Action">
             <option value="">All actions</option>
             {actions.data?.map((a) => (
               <option key={a}>{a}</option>
             ))}
           </Select>
-          <div className="flex items-center gap-2">
-            <Input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1) }} aria-label="From date" />
+          <div className="flex min-w-0 items-center gap-2">
+            <Input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1) }} aria-label="From date" className="min-w-0 flex-1" />
             <span className="text-muted-foreground text-sm">to</span>
-            <Input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(1) }} aria-label="To date" />
+            <Input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(1) }} aria-label="To date" className="min-w-0 flex-1" />
           </div>
         </div>
-        <Table>
+        <Table stack>
           <TableHeader>
             <TableRow>
               <TableHead>Time</TableHead>
@@ -74,18 +73,20 @@ export default function ActivityLogs() {
             ) : (
               logs.data?.results.map((l) => (
                 <TableRow key={l.id}>
-                  <TableCell className="text-muted-foreground text-xs">{fmtDateTime(l.created_at)}</TableCell>
-                  <TableCell>
-                    <p className="font-medium">{l.user_name}</p>
-                    {l.user_role && <p className="text-muted-foreground text-xs">{l.user_role}</p>}
+                  <TableCell label="Time" className="text-muted-foreground text-xs">{fmtDateTime(l.created_at)}</TableCell>
+                  <TableCell label="User">
+                    <div>
+                      <p className="font-medium">{l.user_name}</p>
+                      {l.user_role && <p className="text-muted-foreground text-xs">{l.user_role}</p>}
+                    </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell label="Action">
                     <Badge variant="secondary" className="font-mono">
                       {l.action}
                     </Badge>
                   </TableCell>
-                  <TableCell className="max-w-md whitespace-normal">{l.description}</TableCell>
-                  <TableCell className="text-muted-foreground font-mono text-xs">{l.ip_address ?? '—'}</TableCell>
+                  <TableCell label="Description" className="max-w-md whitespace-normal">{l.description}</TableCell>
+                  <TableCell label="IP address" className="text-muted-foreground font-mono text-xs">{l.ip_address ?? '—'}</TableCell>
                 </TableRow>
               ))
             )}

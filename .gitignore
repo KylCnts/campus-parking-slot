@@ -13,3 +13,5 @@ frontend/.env*
 
 .DS_Store
 .vscode/
+
+backend/.venv/

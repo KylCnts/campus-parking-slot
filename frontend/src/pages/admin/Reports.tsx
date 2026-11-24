@@ -185,7 +185,7 @@ export default function Reports() {
               <h3 className="font-semibold">Transactions ({data.transactions.length})</h3>
             </div>
             {data.transactions.length ? (
-              <Table>
+              <Table stack>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Txn ID</TableHead>
@@ -202,17 +202,17 @@ export default function Reports() {
                 <TableBody>
                   {data.transactions.map((t) => (
                     <TableRow key={t.id}>
-                      <TableCell className="font-mono text-xs">TXN-{String(t.id).padStart(6, '0')}</TableCell>
-                      <TableCell className="font-mono font-semibold">{t.plate_number}</TableCell>
-                      <TableCell>{t.owner}</TableCell>
-                      <TableCell>
+                      <TableCell label="Txn ID" className="font-mono text-xs">TXN-{String(t.id).padStart(6, '0')}</TableCell>
+                      <TableCell label="Plate" className="font-mono font-semibold">{t.plate_number}</TableCell>
+                      <TableCell label="Owner">{t.owner}</TableCell>
+                      <TableCell label="Category">
                         <CategoryBadge category={t.category} />
                       </TableCell>
-                      <TableCell>{t.slot_number}</TableCell>
-                      <TableCell className="text-xs">{fmtDateTime(t.entry_time)}</TableCell>
-                      <TableCell className="text-xs">{fmtDateTime(t.exit_time)}</TableCell>
-                      <TableCell>{fmtDuration(t.duration_minutes)}</TableCell>
-                      <TableCell>
+                      <TableCell label="Space">{t.slot_number}</TableCell>
+                      <TableCell label="Entry" className="text-xs">{fmtDateTime(t.entry_time)}</TableCell>
+                      <TableCell label="Exit" className="text-xs">{fmtDateTime(t.exit_time)}</TableCell>
+                      <TableCell label="Duration">{fmtDuration(t.duration_minutes)}</TableCell>
+                      <TableCell label="Status">
                         <StatusBadge status={t.status} />
                       </TableCell>
                     </TableRow>

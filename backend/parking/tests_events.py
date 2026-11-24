@@ -75,6 +75,11 @@ class ReservationAndEventTests(TransactionTestCase):
         live = ParkingSpace.objects.filter(is_archived=False)
         self.assertEqual(live.filter(slot_type="CAR").count(), 24)
         self.assertEqual(live.filter(slot_type="MOTORCYCLE").count(), 25)
+        offices = live.filter(area__code="D").order_by("slot_number")
+        self.assertEqual({(s.map_w, s.map_h) for s in offices}, {(150, 118)})
+        # Still one column in front of the Offices, D-01 nearest the Main Entrance.
+        self.assertEqual({s.map_x for s in offices}, {1486})
+        self.assertEqual([s.map_y for s in offices], [696, 536, 376, 216])
 
 
 
