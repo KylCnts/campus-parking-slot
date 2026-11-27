@@ -52,7 +52,12 @@ export function todayISO() {
 export function apiError(err: unknown, fallback = 'Something went wrong.'): string {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const res = (err as any)?.response
-  if (!res) return 'Cannot reach the server. Check that the backend is running and try again.'
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const code = (err as any)?.code
+  if (!res && (code === 'ECONNABORTED' || code === 'ETIMEDOUT')) {
+    return 'The server took too long to respond. It may still be starting up; please try again in a moment.'
+  }
+  if (!res) return 'Cannot reach the server. Check your internet connection and try again.'
   if ([502, 503, 504].includes(res.status) && !res.data?.detail) {
     return 'The parking server is currently unavailable. Make sure the backend is running, then try again.'
   }

@@ -22,7 +22,17 @@ export const tokens = {
   },
 }
 
-export const api = axios.create({ baseURL: API_BASE, timeout: 20000 })
+// The production backend runs on a host that sleeps when idle and needs up to about a minute to wake up.
+// Requests must be allowed to wait that long, otherwise the first sign-in after a quiet period fails.
+export const REQUEST_TIMEOUT_MS = 90_000
+export const api = axios.create({ baseURL: API_BASE, timeout: REQUEST_TIMEOUT_MS })
+
+/** Start waking the backend as soon as the site opens, so it is usually ready by the time someone signs in. */
+export function wakeBackend() {
+  axios.get(`${API_BASE}/meta/`, { timeout: REQUEST_TIMEOUT_MS }).catch(() => {
+    /* only a warm-up; real requests report their own errors */
+  })
+}
 
 function tokenExp(token: string | null): number {
   if (!token) return 0
@@ -44,7 +54,7 @@ export function refreshAccessToken(): Promise<string | null> {
   if (!tokens.refresh) return Promise.resolve(null)
   if (!refreshing) {
     refreshing = axios
-      .post(`${API_BASE}/auth/refresh/`, { refresh: tokens.refresh })
+      .post(`${API_BASE}/auth/refresh/`, { refresh: tokens.refresh }, { timeout: REQUEST_TIMEOUT_MS })
       .then((r) => {
         tokens.set(r.data.access, r.data.refresh)
         return r.data.access as string

@@ -15,6 +15,7 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [slow, setSlow] = useState(false)
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
@@ -22,12 +23,16 @@ export default function Login() {
     if (!/^\S+@\S+\.\S+$/.test(email)) return setError('Enter a valid email address.')
     if (!password) return setError('Enter your password.')
     setBusy(true)
+    // The server sleeps when nobody has used it for a while; waking it can take up to a minute.
+    const slowTimer = window.setTimeout(() => setSlow(true), 5000)
     try {
       await login(email.trim(), password)
       nav('/dashboard', { replace: true })
     } catch (err) {
       setError(apiError(err, 'Unable to sign in.'))
     } finally {
+      window.clearTimeout(slowTimer)
+      setSlow(false)
       setBusy(false)
     }
   }
@@ -56,8 +61,13 @@ export default function Login() {
           <PasswordInput id="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
         <Button type="submit" disabled={busy} className="mt-1">
-          {busy && <Loader2 className="animate-spin" />} Sign in
+          {busy && <Loader2 className="animate-spin" />} {slow ? 'Waking up the server…' : 'Sign in'}
         </Button>
+        {slow && (
+          <p role="status" className="text-muted-foreground text-center text-xs">
+            The server is starting up after a period of inactivity. This can take up to a minute; please keep this page open.
+          </p>
+        )}
       </form>
       <div className="text-muted-foreground mt-6 space-y-1 text-center text-sm">
         <p>Don't have an account?</p>

@@ -1,7 +1,7 @@
 from asgiref.sync import async_to_sync
 from channels.testing import WebsocketCommunicator
 from django.contrib.auth import get_user_model
-from django.test import TransactionTestCase
+from django.test import TransactionTestCase, override_settings
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import AccessToken
 
@@ -119,6 +119,26 @@ class ParkingFlowTests(TransactionTestCase):
         upd = next(m for m in msgs if m.get("event") == "vehicle.entry")
         self.assertEqual(upd["summary"]["student"]["occupied"], 1)
         self.assertTrue(any(m["type"] == "notification.new" for m in msgs))
+
+    @override_settings(
+        ALLOWED_HOSTS=["campus-parking-slot.onrender.com"],
+        CORS_ALLOWED_ORIGINS=["https://campus-parking-slot.vercel.app"],
+    )
+    def test_websocket_accepts_the_separately_hosted_frontend(self):
+        """Production: the frontend (Vercel) is on another domain than the backend (Render)."""
+        token = str(AccessToken.for_user(self.student))
+
+        async def connect(origin):
+            comm = WebsocketCommunicator(application, f"/ws/parking/?token={token}", headers=[(b"origin", origin)])
+            ok, _ = await comm.connect()
+            if ok:
+                await comm.disconnect()
+            return ok
+
+        self.assertTrue(async_to_sync(connect)(b"https://campus-parking-slot.vercel.app"))
+        self.assertTrue(async_to_sync(connect)(b"https://campus-parking-slot.onrender.com"))
+        self.assertFalse(async_to_sync(connect)(b"https://evil.example.com"))
+        self.assertFalse(async_to_sync(connect)(b"http://campus-parking-slot.vercel.app"))  # scheme must match too
 
     def test_websocket_rejects_bad_token(self):
         async def run():
