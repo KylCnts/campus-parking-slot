@@ -20,11 +20,9 @@ import ParkingSpaces from '@/pages/admin/ParkingSpaces'
 import Reports from '@/pages/admin/Reports'
 import SettingsPage from '@/pages/admin/Settings'
 import UserManagement from '@/pages/admin/UserManagement'
-import UserReports from '@/pages/admin/UserReports'
 
 import Guidelines from '@/pages/user/Guidelines'
 import MyParking from '@/pages/user/MyParking'
-import MyReports from '@/pages/user/MyReports'
 import MyVehicle from '@/pages/user/MyVehicle'
 import UserDashboard from '@/pages/user/UserDashboard'
 
@@ -113,7 +111,6 @@ export default function App() {
           <Route path="/email-history" element={only(ADMIN, <EmailHistory />)} />
           <Route path="/user-management" element={only(ADMIN, <UserManagement />)} />
           <Route path="/logs" element={only(ADMIN, <LogsAudit />)} />
-          <Route path="/user-reports" element={only(ADMIN, <UserReports />)} />
           <Route path="/reports" element={only(ADMIN, <Reports />)} />
           <Route path="/settings" element={only(ADMIN, <SettingsPage />)} />
           <Route path="/transactions" element={only(ADMIN, <Transactions />)} />
@@ -121,7 +118,6 @@ export default function App() {
 
           <Route path="/my-parking" element={only(MEMBERS, <MyParking />)} />
           <Route path="/my-vehicle" element={only(MEMBERS, <MyVehicle />)} />
-          <Route path="/my-reports" element={only(MEMBERS, <MyReports />)} />
           <Route path="/guidelines" element={<Guidelines />} />
 
           {/* Addresses of pages that were combined into the pages above. */}
@@ -134,6 +130,12 @@ export default function App() {
           <Route path="/vehicles" element={<MovedTo to="/user-management" set={{ tab: 'vehicles' }} />} />
           <Route path="/audit-trail" element={<MovedTo to="/logs" />} />
           <Route path="/activity-logs" element={<MovedTo to="/logs" set={{ tab: 'activity' }} />} />
+          {/*
+            The User Reports feature was removed (concerns now go to the guard at the parking area).
+            Notifications sent before the removal still link here, so these addresses lead somewhere useful.
+          */}
+          <Route path="/my-reports" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/user-reports" element={<Navigate to="/incident-reports" replace />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>

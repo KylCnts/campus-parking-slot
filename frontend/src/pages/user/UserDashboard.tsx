@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight, BookOpen, Car, Map, MessageSquareWarning } from 'lucide-react'
+import { ArrowRight, BookOpen, Car, Map } from 'lucide-react'
 import { AvailabilityCard, ParkingAreasCard } from '@/components/parking'
 import { LiveIndicator, PageHeader } from '@/components/shared'
 import { VehicleColor } from '@/components/vehicle-color'
@@ -38,11 +38,6 @@ export default function UserDashboard() {
             <Button asChild variant="outline" size="sm">
               <Link to="/parking-map">
                 <Map /> Open Parking Spaces
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link to="/my-reports">
-                <MessageSquareWarning /> Send a report
               </Link>
             </Button>
           </>

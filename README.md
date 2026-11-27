@@ -99,7 +99,7 @@ cd backend && python manage.py test parking
 ## Accounts and verification
 - Student assistants and faculty register with a photo of their DLL School ID. New accounts stay **Pending** until an administrator approves them under **User Management → ID Verification**. There is no limit on the number of Student Assistant accounts.
 - Vehicle colors are chosen from a fixed list (`VEHICLE_COLORS` in `accounts/constants.py`, also served by `/api/meta/`). Older free-text colors are kept until the vehicle's color is changed.
-- Student assistants and faculty send reports or concerns from **My Reports** (optional JPG/PNG photo, stored privately). Administrators review them under **User Reports**, set the status (Submitted, Under Review, In Progress, Resolved, Rejected) and reply; the sender is notified.
+- Student assistants and faculty raise parking concerns in person with the Admin / Security Guard at the guard house beside the parking area; there is no in-app report form. Incorrect parking records are tracked by administrators under **Record Reports**. (An earlier User Reports feature was removed; migration `0013_retire_user_reports` keeps its `parking_userreport` table and any submitted rows in the database, unused.)
 - The photo is stored privately and deleted after the decision. The decision itself stays on record.
 - Accounts can be suspended, archived and restored. Administrative actions are kept in a permanent **Audit Trail** (under **Logs & Audit**, next to **Activity Logs**).
 - `python manage.py reset_admin_password <email>` issues a one-time administrator password that must be changed at the next sign-in.
@@ -111,5 +111,5 @@ cd backend && python manage.py test parking
 ## Main API endpoints (`/api/…`)
 `auth/login|refresh|logout|register|me|change-password|password-reset|password-reset/confirm`,
 `users/` (+`toggle-active`, `stats`), `areas/`, `spaces/` (+`bulk-create`), `vehicles/` (+`lookup`, `mine`),
-`transactions/` (+`entry`, `{id}/exit`, `{id}/cancel`, `active`), `incident-reports/`, `user-reports/` (+`summary`, `{id}/attachment`), `notifications/` (+`mark-all-read`),
+`transactions/` (+`entry`, `{id}/exit`, `{id}/cancel`, `active`), `incident-reports/`, `notifications/` (+`mark-all-read`),
 `activity-logs/`, `dashboard/summary/`, `analytics/`, `reports/`, `settings/`, `meta/`.

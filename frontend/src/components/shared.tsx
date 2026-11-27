@@ -147,9 +147,6 @@ const statusVariant: Record<string, 'available' | 'occupied' | 'reserved' | 'ina
   IN_REVIEW: 'reserved',
   RESOLVED: 'available',
   DISMISSED: 'inactive',
-  SUBMITTED: 'occupied',
-  UNDER_REVIEW: 'reserved',
-  IN_PROGRESS: 'event',
 }
 
 export function StatusBadge({ status }: { status: SpaceStatus | TxnStatus | string }) {

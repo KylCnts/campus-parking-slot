@@ -46,14 +46,6 @@ admin.site.register(models.Reservation)
 admin.site.register(models.ParkingEvent)
 admin.site.register(models.EventNotification)
 admin.site.register(models.IncidentReport)
-
-
-@admin.register(models.UserReport)
-class UserReportAdmin(admin.ModelAdmin):
-    list_display = ["id", "title", "reporter_name", "category", "status", "created_at"]
-    list_filter = ["status", "category"]
-    search_fields = ["title", "reporter_name", "reporter_email"]
-    exclude = ["attachment"]  # private image, opened only through the authenticated API
 admin.site.register(models.Notification)
 admin.site.register(models.ActivityLog)
 admin.site.register(models.ParkingSettings)

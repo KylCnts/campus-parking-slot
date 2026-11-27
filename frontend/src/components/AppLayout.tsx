@@ -16,7 +16,6 @@ import {
   Mail,
   Map,
   Menu,
-  MessageSquareWarning,
   Moon,
   ParkingSquare,
   ScrollText,
@@ -70,7 +69,6 @@ const NAV: Record<Role, NavGroup[]> = {
       title: 'Monitoring',
       items: [
         { to: '/reports', label: 'Reports', icon: FileBarChart },
-        { to: '/user-reports', label: 'User Reports', icon: MessageSquareWarning },
         { to: '/incident-reports', label: 'Record Reports', icon: FileWarning },
         { to: '/email-history', label: 'Email History', icon: Mail },
         // Audit Trail and Activity Logs are tabs of one page.
@@ -86,7 +84,6 @@ const NAV: Record<Role, NavGroup[]> = {
         { to: '/my-parking', label: 'My Parking', icon: CarFront },
         { to: '/parking-map', label: 'Parking Spaces', icon: Map },
         { to: '/my-vehicle', label: 'My Vehicle', icon: Car },
-        { to: '/my-reports', label: 'My Reports', icon: MessageSquareWarning },
         { to: '/guidelines', label: 'Parking Guidelines', icon: BookOpen },
       ],
     },

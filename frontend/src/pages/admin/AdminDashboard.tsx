@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight, CalendarClock, CalendarDays, CarFront, FileWarning, Mail, MessageSquareWarning, ParkingSquare, ShieldCheck, SquareCheckBig, Users } from 'lucide-react'
+import { ArrowRight, CalendarClock, CalendarDays, CarFront, FileWarning, Mail, ParkingSquare, ShieldCheck, SquareCheckBig, Users } from 'lucide-react'
 import { ChartCard, EntriesExitsChart, OccupancyBars, shortDate } from '@/components/charts'
 import { AvailabilityCard, ParkingAreasCard } from '@/components/parking'
 import { MetricCard, PageHeader, StatusBadge } from '@/components/shared'
@@ -15,7 +15,6 @@ type Summary = AvailabilitySummary & {
   users: { students: number; faculty: number }
   today: { entries: number; exits: number }
   open_reports: number
-  open_user_reports: number
   registered_vehicles: number
   upcoming_events: number
   pending_verifications: number
@@ -70,13 +69,6 @@ export default function AdminDashboard() {
         <Link to="/user-management?tab=verification" className="border-reserved/50 bg-reserved/10 flex items-center gap-3 rounded-lg border px-4 py-3 text-sm">
           <ShieldCheck className="size-5 shrink-0" />
           <span><strong>{s.pending_verifications}</strong> registration(s) are waiting for School ID verification.</span>
-          <ArrowRight className="ml-auto size-4 shrink-0" />
-        </Link>
-      )}
-      {!!s?.open_user_reports && (
-        <Link to="/user-reports" className="border-occupied/30 bg-occupied/5 flex items-center gap-3 rounded-lg border px-4 py-3 text-sm">
-          <MessageSquareWarning className="size-5 shrink-0" />
-          <span><strong>{s.open_user_reports}</strong> user report(s) are open and waiting for a response.</span>
           <ArrowRight className="ml-auto size-4 shrink-0" />
         </Link>
       )}

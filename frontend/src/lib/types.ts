@@ -335,49 +335,4 @@ export interface Meta {
   report_kinds: Option[]
   courses: string[]
   vehicle_colors: ColorOption[]
-  user_report_categories: Option[]
-}
-
-export type UserReportStatus = 'SUBMITTED' | 'UNDER_REVIEW' | 'IN_PROGRESS' | 'RESOLVED' | 'REJECTED'
-
-export interface UserReport {
-  id: number
-  reference: string
-  category: string
-  category_display: string
-  title: string
-  description: string
-  has_attachment: boolean
-  status: UserReportStatus
-  status_display: string
-  admin_response: string
-  handled_by_name: string
-  responded_at: string | null
-  resolved_at: string | null
-  reporter_name: string
-  reporter_email: string
-  reporter_details: {
-    id: number
-    role: Role
-    role_display: string
-    id_number: string | null
-    department: string
-    contact_number: string
-    account_status: AccountStatus
-    plate_number: string | null
-  } | null
-  created_at: string
-  updated_at: string
-}
-
-export interface UserReportSummary {
-  total: number
-  submitted: number
-  under_review: number
-  in_progress: number
-  resolved: number
-  rejected: number
-  pending: number
-  ongoing: number
-  closed: number
 }
